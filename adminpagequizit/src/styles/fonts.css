@@ -1,0 +1,13 @@
+:root {
+  --font-family-poppins: "Poppins", sans-serif;
+  --font-family-roboto: "Roboto", sans-serif;
+  --font-size-small: 12px;
+  --font-size-medium: 16px;
+  --font-size-large: 20px;
+  --font-size-15: 15px;
+  --font-size-18: 18px;
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+}

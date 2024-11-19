@@ -1,0 +1,7 @@
+@import "./fonts.css";
+#app {
+  font-family: var(--font-family-roboto);
+  font-size: var(--font-size-medium);
+  font-weight: var(--font-weight-regular);
+  color: #2c3e50;
+}
