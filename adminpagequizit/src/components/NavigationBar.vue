@@ -1,7 +1,11 @@
 <template>
   <nav>
     <div class="logo-container">
-      <img src="@/assets/logo_quizit_lightmode.png" alt="Logo" class="logo" />
+      <img
+        src="@/assets/logo_quizit_lightmode_white.png"
+        alt="Logo"
+        class="logo"
+      />
       <span class="title">Admin-Dashboard</span>
     </div>
 
