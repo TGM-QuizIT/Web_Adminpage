@@ -7,6 +7,7 @@
 
 <style>
 @import "styles/fonts.css";
+@import "material-symbols";
 
 #app {
   font-family: var(--font-family-roboto), sans-serif;

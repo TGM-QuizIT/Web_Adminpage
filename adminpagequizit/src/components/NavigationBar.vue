@@ -10,15 +10,32 @@
     </div>
 
     <div class="nav-items">
-      <router-link to="/datenverwaltung" class="nav-item">
-        Datenverwaltung
-      </router-link>
-      <router-link to="/benutzerverwaltung" class="nav-item">
-        Benutzerverwaltung
-      </router-link>
-      <router-link to="/statistiken" class="nav-item">
-        Statistiken
-      </router-link>
+      <div class="item-group">
+        <router-link
+          to="/datenverwaltung"
+          class="nav-item"
+          active-class="active"
+        >
+          <span class="material-symbols-outlined">database</span>
+          Datenverwaltung
+        </router-link>
+      </div>
+      <div class="item-group">
+        <router-link
+          to="/benutzerverwaltung"
+          class="nav-item"
+          active-class="active"
+        >
+          <span class="material-symbols-outlined">manage_accounts</span>
+          Benutzerverwaltung
+        </router-link>
+      </div>
+      <div class="item-group">
+        <router-link to="/statistiken" class="nav-item" active-class="active">
+          <span class="material-symbols-outlined">analytics</span>
+          Statistiken
+        </router-link>
+      </div>
     </div>
   </nav>
 </template>
@@ -63,10 +80,11 @@ nav {
   text-decoration: none;
 }
 
-.nav-item i {
-  margin-right: 5px;
-}
 .nav-item:hover {
   color: #ddd;
+}
+
+.nav-item.active {
+  color: #c1272d;
 }
 </style>
