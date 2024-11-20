@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <p>Startseite</p>
+    <p class="welcome-text">Willkommen im Admin-Dashboard</p>
   </div>
 </template>
 
@@ -10,3 +10,17 @@ export default {
   components: {},
 };
 </script>
+
+<style>
+.welcome-text {
+  color: #000000;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.home {
+  display: flex;
+  justify-content: center;
+  margin: 20px;
+}
+</style>

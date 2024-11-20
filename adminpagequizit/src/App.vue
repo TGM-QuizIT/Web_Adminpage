@@ -13,7 +13,6 @@
   font-family: var(--font-family-roboto), sans-serif;
   font-size: var(--font-size-medium);
   font-weight: var(--font-weight-regular);
-  color: #2c3e50;
 }
 
 body {
@@ -22,15 +21,6 @@ body {
 
 nav {
   padding: 30px;
-}
-
-nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-nav a.router-link-exact-active {
-  color: #42b983;
 }
 </style>
 <script setup>
