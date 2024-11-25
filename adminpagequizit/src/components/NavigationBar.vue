@@ -1,21 +1,23 @@
 <template>
   <nav>
-    <div class="logo-container">
-      <img
-        src="@/assets/logo_quizit_lightmode_white.png"
-        alt="Logo"
-        class="logo"
-      />
-      <span class="title">Admin-Dashboard</span>
-    </div>
+    <router-link to="/home" class="nav-item" active-class="active">
+      <div class="logo-container">
+        <img
+          src="@/assets/logo_quizit_blackwhite.png"
+          alt="Logo"
+          class="logo"
+        />
+        <span class="title">Admin-Dashboard</span>
+      </div>
+    </router-link>
 
     <div class="nav-items-and-profile">
       <div class="nav-items">
         <div class="item-group">
           <router-link
-              to="/datenverwaltung"
-              class="nav-item"
-              active-class="active"
+            to="/datenverwaltung"
+            class="nav-item"
+            active-class="active"
           >
             <span class="material-symbols-outlined">database</span>
             <p class="nav-item-text">Datenverwaltung</p>
@@ -23,9 +25,9 @@
         </div>
         <div class="item-group">
           <router-link
-              to="/benutzerverwaltung"
-              class="nav-item"
-              active-class="active"
+            to="/benutzerverwaltung"
+            class="nav-item"
+            active-class="active"
           >
             <span class="material-symbols-outlined">manage_accounts</span>
             <p class="nav-item-text">Benutzerverwaltung</p>
@@ -47,8 +49,7 @@
   </nav>
 </template>
 
-<script setup>
-</script>
+<script setup></script>
 
 <style scoped>
 nav {
@@ -131,7 +132,6 @@ nav {
   color: #ddd;
 }
 
-
 .nav-item-text {
   margin-left: 10px;
   pointer-events: none;
@@ -158,5 +158,4 @@ nav {
   color: #ddd;
   transition: color 0.3s ease-in-out;
 }
-
 </style>

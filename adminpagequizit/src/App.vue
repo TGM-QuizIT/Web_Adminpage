@@ -13,6 +13,9 @@
   font-family: var(--font-family-roboto), sans-serif;
   font-size: var(--font-size-medium);
   font-weight: var(--font-weight-regular);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
 body {
