@@ -1,3 +1,18 @@
+<script setup>
+import { useRoute } from "vue-router";
+import { ref, watch } from "vue";
+
+const route = useRoute();
+
+const showNavItems = ref(route.meta.showNavItems !== false);
+
+watch(
+  () => route.path,
+  () => {
+    showNavItems.value = route.meta.showNavItems !== false;
+  }
+);
+</script>
 <template>
   <nav>
     <router-link to="/home" class="nav-item" active-class="active">
@@ -11,7 +26,7 @@
       </div>
     </router-link>
 
-    <div class="nav-items-and-profile">
+    <div class="nav-items-and-profile" v-if="showNavItems">
       <div class="nav-items">
         <div class="item-group">
           <router-link
@@ -48,8 +63,6 @@
     </div>
   </nav>
 </template>
-
-<script setup></script>
 
 <style scoped>
 nav {

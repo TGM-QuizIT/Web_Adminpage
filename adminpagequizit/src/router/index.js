@@ -5,14 +5,32 @@ import BenutzerverwaltungView from "@/views/BenutzerverwaltungView.vue";
 import StatistikenView from "@/views/StatistikenView.vue";
 import ProfilView from "@/views/ProfilView.vue";
 import LoginView from "@/views/LoginView.vue";
+import BenutzereinstellungenView from "@/views/BenutzereinstellungenView.vue";
 
 const routes = [
-  { path: "/", component: HomeView },
-  { path: "/datenverwaltung", component: DatenverwaltungView },
-  { path: "/benutzerverwaltung", component: BenutzerverwaltungView },
-  { path: "/statistiken", component: StatistikenView },
-  { path: "/profil", component: ProfilView },
-  { path: "/login", component: LoginView },
+  { path: "/", component: HomeView, meta: { showNavItems: true } },
+  {
+    path: "/datenverwaltung",
+    component: DatenverwaltungView,
+    meta: { showNavItems: true },
+  },
+  {
+    path: "/benutzerverwaltung",
+    component: BenutzerverwaltungView,
+    meta: { showNavItems: true },
+  },
+  {
+    path: "/statistiken",
+    component: StatistikenView,
+    meta: { showNavItems: true },
+  },
+  { path: "/profil", component: ProfilView, meta: { showNavItems: true } },
+  { path: "/login", component: LoginView, meta: { showNavItems: false } },
+  {
+    path: "/benutzereinstellungen",
+    component: BenutzereinstellungenView,
+    meta: { showNavItems: true },
+  },
 ];
 
 const router = createRouter({
