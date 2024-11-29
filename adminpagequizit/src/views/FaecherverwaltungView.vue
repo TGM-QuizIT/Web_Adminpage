@@ -1,0 +1,202 @@
+<script setup>
+import { ref, computed, onMounted } from "vue";
+
+// Lokale Speicherung der Fächer
+const faecher = ref([]);
+const searchQuery = ref("");
+
+// Gefilterte Liste basierend auf der Suche
+const filteredFaecher = computed(() => {
+  return faecher.value.filter((fach) =>
+    fach.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+});
+
+const fetchFaecher = () => {
+  const storedFaecher = localStorage.getItem("faecher");
+
+  if (storedFaecher) {
+    faecher.value = JSON.parse(storedFaecher);
+  } else {
+    faecher.value = [];
+  }
+};
+
+const createSubject = () => {
+  const newFach = {
+    id: Date.now(),
+    name: "Neues Fach",
+    verantwortlicheLehrkraefte: ["Lehrkraft 1"],
+  };
+  faecher.value.push(newFach);
+  saveFaecher();
+};
+
+const editFach = (id) => {
+  const fachToEdit = faecher.value.find((fach) => fach.id === id);
+  if (fachToEdit) {
+    console.log("Fach zum Bearbeiten:", fachToEdit);
+  }
+};
+
+const deleteFach = (id) => {
+  faecher.value = faecher.value.filter((fach) => fach.id !== id);
+  saveFaecher();
+};
+
+const saveFaecher = () => {
+  localStorage.setItem("faecher", JSON.stringify(faecher.value));
+};
+
+onMounted(fetchFaecher);
+</script>
+
+<template>
+  <div class="faecherverwaltungs-container">
+    <h1>Fächerverwaltung</h1>
+    <div class="header">
+      <button @click="createSubject" class="fach-create-button">
+        <span class="material-symbols-outlined">post_add</span>Fach erstellen
+      </button>
+      <div class="search-container">
+        <span class="search-icon material-symbols-outlined">search</span>
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Suchen..."
+          class="search-field"
+        />
+      </div>
+    </div>
+
+    <div class="fach-liste" v-if="filteredFaecher.length > 0">
+      <div class="fach-item" v-for="fach in filteredFaecher" :key="fach.id">
+        <span class="fach-name">{{ fach.name }}</span>
+        <span class="fach-teachers">
+          Verantwortliche Lehrkräfte:
+          {{ fach.verantwortlicheLehrkraefte.join("; ") }}
+        </span>
+        <div class="actions">
+          <button @click="editFach(fach.id)">
+            <span class="material-symbols-outlined">edit</span>
+          </button>
+          <button @click="deleteFach(fach.id)">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <p v-else>Keine Fächer gefunden.</p>
+  </div>
+</template>
+
+<style scoped>
+html,
+body {
+  height: 100%;
+}
+
+.faecherverwaltungs-container {
+  display: flex;
+  max-height: 86%;
+  flex: 1;
+  flex-direction: column;
+  margin-top: 1%;
+  margin-left: 2%;
+  margin-right: 2%;
+}
+
+h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+button {
+  padding: 10px;
+  width: 10%;
+  background-color: #009de0;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+button:hover {
+  background-color: #007bb5;
+  transition: background-color 0.3s;
+}
+
+.fach-liste {
+  height: 70%;
+  width: 100%;
+  overflow-y: auto;
+  margin-top: 20px;
+  border-radius: 8px;
+  background-color: #f4f3f6;
+}
+
+.fach-item {
+  background-color: #d5d5d5;
+  margin: 2%;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: -4px 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fach-name {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.fach-teachers {
+  font-size: 14px;
+  color: #666;
+}
+
+.actions button {
+  margin-left: 10px;
+  height: 5%;
+  width: auto;
+}
+
+.fach-create-button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 12%;
+  font-size: 20px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  color: #888;
+  font-size: 20px;
+}
+
+.search-field {
+  padding-left: 35px; /* Platz für das Icon */
+  padding-right: 10px;
+  width: 100%;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+</style>

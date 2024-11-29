@@ -6,6 +6,7 @@ import StatistikenView from "@/views/StatistikenView.vue";
 import ProfilView from "@/views/ProfilView.vue";
 import LoginView from "@/views/LoginView.vue";
 import BenutzereinstellungenView from "@/views/BenutzereinstellungenView.vue";
+import FaecherverwaltungView from "@/views/FaecherverwaltungView.vue";
 
 const routes = [
   { path: "/", component: HomeView, meta: { showNavItems: true } },
@@ -29,6 +30,11 @@ const routes = [
   {
     path: "/benutzereinstellungen",
     component: BenutzereinstellungenView,
+    meta: { showNavItems: true },
+  },
+  {
+    path: "/faecherverwaltung",
+    component: FaecherverwaltungView,
     meta: { showNavItems: true },
   },
 ];

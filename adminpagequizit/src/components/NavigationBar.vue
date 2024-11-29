@@ -70,7 +70,7 @@ nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 100px;
+  height: 12%;
   padding: 0 0 0 20px;
   margin: 0;
 }
