@@ -1,24 +1,45 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import {ref, computed, onMounted} from "vue";
 
-// Lokale Speicherung der Fächer
 const faecher = ref([]);
 const searchQuery = ref("");
 
-// Gefilterte Liste basierend auf der Suche
 const filteredFaecher = computed(() => {
   return faecher.value.filter((fach) =>
-    fach.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+      fach.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
 
-const fetchFaecher = () => {
-  const storedFaecher = localStorage.getItem("faecher");
+const fetchFaecherVomBackend = async () => {
+  try {
+    const response = await fetch(
+        "https://projekte.tgm.ac.at/quizit/api/subject",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a",
+          },
+        }
+    );
 
-  if (storedFaecher) {
-    faecher.value = JSON.parse(storedFaecher);
-  } else {
-    faecher.value = [];
+    if (!response.ok) {
+      throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.status === "Success" && data.subjects) {
+      faecher.value = data.subjects.map((subject) => ({
+        id: subject.subjectId,
+        name: subject.subjectName,
+        verantwortlicheLehrkraefte: [],
+      }));
+    } else {
+      console.error("Keine Fächer gefunden oder Fehler im Response-Body.");
+    }
+  } catch (error) {
+    console.error("Fehler beim Laden der Fächer:", error);
   }
 };
 
@@ -48,7 +69,9 @@ const saveFaecher = () => {
   localStorage.setItem("faecher", JSON.stringify(faecher.value));
 };
 
-onMounted(fetchFaecher);
+onMounted(() => {
+  fetchFaecherVomBackend();
+});
 </script>
 
 <template>
@@ -192,7 +215,7 @@ button:hover {
 }
 
 .search-field {
-  padding-left: 35px; /* Platz für das Icon */
+  padding-left: 35px;
   padding-right: 10px;
   width: 100%;
   font-size: 16px;
