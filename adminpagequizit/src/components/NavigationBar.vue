@@ -125,20 +125,16 @@ nav {
 }
 
 .item-group:hover {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.4);
   transition: background-color 0.3s ease;
+}
+
+.nav-item.active {
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
 .item-group:hover .nav-item {
   color: white;
-}
-
-.nav-item.active {
-  color: #c1272d;
-}
-
-.nav-item.active:hover {
-  color: #c1272d;
 }
 
 .nav-item:hover {
