@@ -27,7 +27,6 @@ const filteredSchwerpunkte = computed(() => {
 const fetchSchwerpunkteVomBackend = async () => {
   try {
 
-
     for (const id of defaultIds) {
       const response = await fetch(
           `https://projekte.tgm.ac.at/quizit/api/focus?id=${id}`,
@@ -56,6 +55,10 @@ const fetchSchwerpunkteVomBackend = async () => {
     schwerpunkte.value = allFocuses.map((focusObject) => ({
       id: focusObject.focusId,
       name: focusObject.focusName,
+      year: focusObject.focusYear,
+      imageAddress: focusObject.focusImageAddress,
+      subjectId: focusObject.subjectId,
+      active: focusObject.focusActive === 1,
     }));
 
     console.log("Geladene Schwerpunkte:", schwerpunkte.value);
@@ -68,6 +71,7 @@ const createSchwerpunkt = () => {
   const newSchwerpunkt = {
     id: uuidv4(),
     name: "Neuer Schwerpunkt",
+    active: 1,
   };
   schwerpunkte.value.push(newSchwerpunkt);
   saveSchwerpunkte();
@@ -90,13 +94,51 @@ const deleteSchwerpunkt = (id) => {
 };
 
 const saveSchwerpunkte = () => {
+
   localStorage.setItem("schwerpunkte", JSON.stringify(schwerpunkte.value));
 };
+
+const updateSchwerpunkt = async (schwerpunkt) => {
+  // Den 'focusActive'-Status in das passende Format umwandeln (1 für true, 0 für false)
+  const updatedFocus = {
+    ...schwerpunkt,  // Behalte alle bestehenden Daten des Schwerpunkts bei
+    focusActive: schwerpunkt.active ? 1 : 0,  // 'true' wird zu 1, 'false' zu 0
+  };
+
+  // Nur senden, wenn sich der Wert von 'focusActive' geändert hat
+  if (schwerpunkt.active !== updatedFocus.focusActive) {
+    try {
+      const response = await fetch('https://projekte.tgm.ac.at/quizit/api/focus', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': '2e5c9ed5-c5f5-458a-a1cb-40b6235b052a',  // Auth-Token
+        },
+        body: JSON.stringify(updatedFocus),
+      });
+
+      if (!response.ok) {
+        // Fehlerbehandlung, falls die Anfrage nicht erfolgreich war
+        const errorData = await response.json();
+        throw new Error(`Fehler beim Aktualisieren des Schwerpunkts: ${errorData.status} - ${errorData.reason}`);
+      }
+
+      const data = await response.json();
+      console.log('Schwerpunkt erfolgreich aktualisiert:', data);
+
+    } catch (error) {
+      // Fehler ausgeben, falls beim Senden der Anfrage etwas schief geht
+      console.error('Fehler beim Aktualisieren des Schwerpunkts:', error);
+    }
+  } else {
+    console.log('Kein Update erforderlich, da keine Änderung beim Status vorliegt.');
+  }
+};
+
 
 onMounted(() => {
   fetchSchwerpunkteVomBackend();
 });
-
 </script>
 
 <template>
@@ -118,9 +160,22 @@ onMounted(() => {
     </div>
 
     <div class="schwerpunkt-liste" v-if="filteredSchwerpunkte.length > 0">
-      <div class="schwerpunkt-item" v-for="schwerpunkt in filteredSchwerpunkte" :key="schwerpunkt.id">
+      <div
+          class="schwerpunkt-item"
+          v-for="schwerpunkt in filteredSchwerpunkte"
+          :key="schwerpunkt.id"
+          :class="{ 'inactive': schwerpunkt.active === false }"
+      >
         <span class="schwerpunkt-name">{{ schwerpunkt.name }}</span>
         <div class="actions">
+          <label class="aktivCheck">
+            Schwerpunkt aktiviert:
+            <input
+                type="checkbox"
+                v-model="schwerpunkt.active"
+                @change="updateSchwerpunkt(schwerpunkt)"
+            />
+          </label>
           <button @click="editSchwerpunkt(schwerpunkt.id)">
             <span class="material-symbols-outlined">edit</span>
           </button>
@@ -136,9 +191,13 @@ onMounted(() => {
 </template>
 
 <style scoped>
-html,
-body {
-  height: 100%;
+.inactive {
+  background-color: #e0e0e0;
+  color: #888;
+  opacity: 0.5;
+}
+
+.aktivCheck {
 }
 
 .schwerpunkteverwaltungs-container {
