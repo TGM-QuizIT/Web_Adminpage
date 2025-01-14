@@ -7,12 +7,18 @@ import ProfilView from "@/views/ProfilView.vue";
 import LoginView from "@/views/LoginView.vue";
 import BenutzereinstellungenView from "@/views/BenutzereinstellungenView.vue";
 import FaecherverwaltungView from "@/views/FaecherverwaltungView.vue";
+import SchwerpunktverwaltungView from "@/views/SchwerpunktverwaltungView.vue";
 
 const routes = [
   { path: "/", component: HomeView, meta: { showNavItems: true } },
   {
     path: "/datenverwaltung",
     component: DatenverwaltungView,
+    meta: { showNavItems: true },
+  },
+  {
+    path: "/faecherverwaltung",
+    component: FaecherverwaltungView,
     meta: { showNavItems: true },
   },
   {
@@ -33,8 +39,9 @@ const routes = [
     meta: { showNavItems: true },
   },
   {
-    path: "/faecherverwaltung",
-    component: FaecherverwaltungView,
+    path: "/schwerpunktverwaltung/",
+    component: SchwerpunktverwaltungView,
+    props: true,
     meta: { showNavItems: true },
   },
 ];

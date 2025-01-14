@@ -1,5 +1,8 @@
 <script setup>
-import {ref, computed, onMounted} from "vue";
+import { useRouter } from "vue-router";
+import { ref, computed, onMounted } from "vue";
+
+const router = useRouter();
 
 const faecher = ref([]);
 const searchQuery = ref("");
@@ -69,6 +72,13 @@ const saveFaecher = () => {
   localStorage.setItem("faecher", JSON.stringify(faecher.value));
 };
 
+const navigateToSchwerpunkte = (fach) => {
+  router.push({
+    path: '/schwerpunktverwaltung',
+    query: { fachId: fach.id }
+  });
+};
+
 onMounted(() => {
   fetchFaecherVomBackend();
 });
@@ -84,26 +94,31 @@ onMounted(() => {
       <div class="search-container">
         <span class="search-icon material-symbols-outlined">search</span>
         <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Suchen..."
-          class="search-field"
+            v-model="searchQuery"
+            type="text"
+            placeholder="Suchen..."
+            class="search-field"
         />
       </div>
     </div>
 
     <div class="fach-liste" v-if="filteredFaecher.length > 0">
-      <div class="fach-item" v-for="fach in filteredFaecher" :key="fach.id">
+      <div
+          class="fach-item"
+          v-for="fach in filteredFaecher"
+          :key="fach.id"
+          @click="navigateToSchwerpunkte(fach)"
+      >
         <span class="fach-name">{{ fach.name }}</span>
         <span class="fach-teachers">
           Verantwortliche Lehrkräfte:
           {{ fach.verantwortlicheLehrkraefte.join("; ") }}
         </span>
         <div class="actions">
-          <button @click="editFach(fach.id)">
+          <button @click.stop="editFach(fach.id)">
             <span class="material-symbols-outlined">edit</span>
           </button>
-          <button @click="deleteFach(fach.id)">
+          <button @click.stop="deleteFach(fach.id)">
             <span class="material-symbols-outlined">delete</span>
           </button>
         </div>
@@ -169,6 +184,11 @@ button:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  cursor: pointer;
+}
+
+.fach-item:hover {
+  background-color: #cccccc;
 }
 
 .fach-name {

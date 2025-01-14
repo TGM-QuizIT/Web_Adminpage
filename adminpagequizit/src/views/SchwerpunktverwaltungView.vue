@@ -1,26 +1,33 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { v4 as uuidv4 } from "uuid"; // UUID-Generator
+import { v4 as uuidv4 } from "uuid";
+import { useRoute } from 'vue-router';
 
-// Lokale Speicherung der Schwerpunkte
+const route = useRoute();
+
+const fachId = route.query.fachId;
+console.log("Schwerpunktverwaltung mit Fach-ID:", fachId);
+
 const schwerpunkte = ref([]);
 const searchQuery = ref("");
+const defaultIds = [];
 
-// Filtert die Schwerpunkte nach dem Suchbegriff
+if (fachId) {
+  defaultIds.push(fachId);
+}
+
+const allFocuses = [];
+
 const filteredSchwerpunkte = computed(() => {
   return schwerpunkte.value.filter((schwerpunkt) =>
       schwerpunkt.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
 
-// Holt die Schwerpunkte vom Backend
 const fetchSchwerpunkteVomBackend = async () => {
   try {
-    // Liste von IDs, die standardmäßig verwendet werden
-    const defaultIds = [1]; // Füge hier die IDs ein, die standardmäßig geladen werden sollen
-    const allFocuses = [];
 
-    // Alle IDs durchlaufen und die Daten abfragen
+
     for (const id of defaultIds) {
       const response = await fetch(
           `https://projekte.tgm.ac.at/quizit/api/focus?id=${id}`,
@@ -46,7 +53,6 @@ const fetchSchwerpunkteVomBackend = async () => {
       }
     }
 
-    // Ergebnisse speichern
     schwerpunkte.value = allFocuses.map((focusObject) => ({
       id: focusObject.focusId,
       name: focusObject.focusName,
@@ -58,28 +64,24 @@ const fetchSchwerpunkteVomBackend = async () => {
   }
 };
 
-// Erstelle einen neuen Schwerpunkt
 const createSchwerpunkt = () => {
   const newSchwerpunkt = {
-    id: uuidv4(), // Verwende UUID für die ID
+    id: uuidv4(),
     name: "Neuer Schwerpunkt",
   };
   schwerpunkte.value.push(newSchwerpunkt);
   saveSchwerpunkte();
 };
 
-// Bearbeite einen bestehenden Schwerpunkt
 const editSchwerpunkt = (id) => {
   const schwerpunktToEdit = schwerpunkte.value.find(
       (schwerpunkt) => schwerpunkt.id === id
   );
   if (schwerpunktToEdit) {
     console.log("Schwerpunkt zum Bearbeiten:", schwerpunktToEdit);
-    // Hier könnte man eine Modal oder ein Formular für die Bearbeitung hinzufügen
   }
 };
 
-// Lösche einen Schwerpunkt
 const deleteSchwerpunkt = (id) => {
   schwerpunkte.value = schwerpunkte.value.filter(
       (schwerpunkt) => schwerpunkt.id !== id
@@ -87,15 +89,14 @@ const deleteSchwerpunkt = (id) => {
   saveSchwerpunkte();
 };
 
-// Speichere die Schwerpunkte lokal
 const saveSchwerpunkte = () => {
   localStorage.setItem("schwerpunkte", JSON.stringify(schwerpunkte.value));
 };
 
-// Lade die Schwerpunkte, wenn die Komponente gemountet wird
 onMounted(() => {
   fetchSchwerpunkteVomBackend();
 });
+
 </script>
 
 <template>
