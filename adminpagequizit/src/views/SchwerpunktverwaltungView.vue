@@ -44,9 +44,10 @@ const fetchSchwerpunkteVomBackend = async () => {
       }
 
       const data = await response.json();
+      console.log(data);
 
-      if (data.status === "Success" && data.focus) {
-        allFocuses.push(...data.focus);
+      if (data.status === "Success" && data.focuses) {
+        allFocuses.push(...data.focuses);
       } else {
         console.warn(`Keine Schwerpunkte für ID ${id} gefunden.`);
       }
@@ -94,31 +95,32 @@ const deleteSchwerpunkt = (id) => {
 };
 
 const saveSchwerpunkte = () => {
-
   localStorage.setItem("schwerpunkte", JSON.stringify(schwerpunkte.value));
 };
 
 const updateSchwerpunkt = async (schwerpunkt) => {
-  // Den 'focusActive'-Status in das passende Format umwandeln (1 für true, 0 für false)
+
   const updatedFocus = {
-    ...schwerpunkt,  // Behalte alle bestehenden Daten des Schwerpunkts bei
-    focusActive: schwerpunkt.active ? 1 : 0,  // 'true' wird zu 1, 'false' zu 0
+    focusId: schwerpunkt.id,
+    focusName: schwerpunkt.name,
+    focusYear: schwerpunkt.year,
+    focusImageAddress: schwerpunkt.imageAddress,
+    subjectId: schwerpunkt.subjectId,
+    focusActive: schwerpunkt.active,
   };
 
-  // Nur senden, wenn sich der Wert von 'focusActive' geändert hat
-  if (schwerpunkt.active !== updatedFocus.focusActive) {
+  if (schwerpunkt.active !== (updatedFocus.focusActive === false)) {
     try {
       const response = await fetch('https://projekte.tgm.ac.at/quizit/api/focus', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': '2e5c9ed5-c5f5-458a-a1cb-40b6235b052a',  // Auth-Token
+          'Authorization': '2e5c9ed5-c5f5-458a-a1cb-40b6235b052a',
         },
         body: JSON.stringify(updatedFocus),
       });
 
       if (!response.ok) {
-        // Fehlerbehandlung, falls die Anfrage nicht erfolgreich war
         const errorData = await response.json();
         throw new Error(`Fehler beim Aktualisieren des Schwerpunkts: ${errorData.status} - ${errorData.reason}`);
       }
@@ -127,7 +129,6 @@ const updateSchwerpunkt = async (schwerpunkt) => {
       console.log('Schwerpunkt erfolgreich aktualisiert:', data);
 
     } catch (error) {
-      // Fehler ausgeben, falls beim Senden der Anfrage etwas schief geht
       console.error('Fehler beim Aktualisieren des Schwerpunkts:', error);
     }
   } else {
@@ -168,7 +169,7 @@ onMounted(() => {
       >
         <span class="schwerpunkt-name">{{ schwerpunkt.name }}</span>
         <div class="actions">
-          <label class="aktivCheck">
+          <label>
             Schwerpunkt aktiviert:
             <input
                 type="checkbox"
@@ -195,9 +196,6 @@ onMounted(() => {
   background-color: #e0e0e0;
   color: #888;
   opacity: 0.5;
-}
-
-.aktivCheck {
 }
 
 .schwerpunkteverwaltungs-container {
