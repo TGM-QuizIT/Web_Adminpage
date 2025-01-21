@@ -1,11 +1,3 @@
-<script setup>
-import { useRouter } from "vue-router";
-const router = useRouter();
-function tryLogin() {
-  router.push("/home");
-}
-</script>
-
 <template>
   <div class="page-container">
     <h1>Login</h1>
@@ -13,18 +5,81 @@ function tryLogin() {
       Bitte melden Sie sich mit Ihren TGM-Anmeldedaten an!
     </p>
     <div class="login-container">
-      <form>
-        <label for="email">E-Mail-Adresse</label>
-        <input type="email" id="email" name="email" required />
+      <form @submit="tryLogin">
+        <label for="username">Benutzername</label>
+        <input
+            type="text"
+            id="username"
+            v-model="username"
+            name="username"
+            required
+        />
 
         <label for="password">Passwort</label>
-        <input type="password" id="password" name="password" required />
+        <input
+            type="password"
+            id="password"
+            v-model="password"
+            name="password"
+            required
+        />
 
-        <button type="submit" @click="tryLogin">Login</button>
+        <button type="submit">Login</button>
+        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
       </form>
     </div>
   </div>
 </template>
+
+<script setup>
+import {ref} from "vue";
+import {useRouter} from "vue-router";
+import axios from "axios";
+
+const router = useRouter();
+const username = ref("");
+const password = ref("");
+const errorMessage = ref("");
+
+async function tryLogin(event) {
+  event.preventDefault();
+  errorMessage.value = "";
+
+  try {
+    const response = await axios.post(
+        "https://projekte.tgm.ac.at/quizit/api/user/login",
+        {
+          userName: username.value,
+          password: password.value,
+        },
+        {
+          headers: {
+            authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a",
+          },
+        }
+    );
+
+    if (response.data.status === "Success") {
+      const token = crypto.getRandomValues(new Uint8Array(16)).join('');
+      localStorage.setItem('authToken', token);
+
+      router.push("/home");
+    } else {
+      errorMessage.value = "Unerwarteter Fehler. Bitte versuchen Sie es erneut.";
+    }
+  } catch (error) {
+    if (error.response) {
+      if (error.response.status === 401) {
+        errorMessage.value = "Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre Eingaben.";
+      } else {
+        errorMessage.value = `Fehler: ${error.response.data.reason}`;
+      }
+    } else {
+      errorMessage.value = "Netzwerkfehler. Bitte versuchen Sie es später erneut.";
+    }
+  }
+}
+</script>
 
 <style scoped>
 .page-container {
@@ -87,5 +142,11 @@ button:hover {
 .login-info {
   margin-bottom: 3%;
   color: #636363;
+}
+
+.error-message {
+  color: red;
+  font-size: 14px;
+  margin-top: 10px;
 }
 </style>
