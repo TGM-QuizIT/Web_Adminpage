@@ -15,7 +15,7 @@ watch(
 </script>
 <template>
   <nav>
-    <router-link to="/home" class="nav-item" active-class="active">
+    <router-link to="/datenverwaltung" class="nav-item" active-class="router-link-active">
       <div class="logo-container">
         <img
           src="@/assets/logo_quizit_blackwhite.png"
@@ -166,5 +166,9 @@ nav {
 .profil-link:hover span {
   color: #ddd;
   transition: color 0.3s ease-in-out;
+}
+
+.logo-container.router-link-active {
+  background-color: transparent !important;
 }
 </style>
