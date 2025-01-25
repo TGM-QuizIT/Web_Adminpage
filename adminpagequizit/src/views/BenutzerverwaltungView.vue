@@ -134,7 +134,7 @@ body {
 
 .benutzerverwaltungs-container {
   display: flex;
-  max-height: 86%;
+  max-height: 85%;
   flex: 1;
   flex-direction: column;
   margin-top: 1%;
