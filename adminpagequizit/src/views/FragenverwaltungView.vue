@@ -11,6 +11,30 @@ const fragen = ref([]);
 const searchQuery = ref("");
 const allQuestions = [];
 
+const selectedType = ref("single");
+
+const onTypeChange = () => {
+  if (selectedType.value === "single") {
+    const firstCorrectIndex = currentFrage.value.options.findIndex(
+        (option) => option.optionCorrect
+    );
+    currentFrage.value.selectedCorrectAnswer =
+        firstCorrectIndex !== -1 ? firstCorrectIndex : null;
+
+    currentFrage.value.options.forEach((option) => {
+      option.optionCorrect = false;
+    });
+  } else if (selectedType.value === "multiple") {
+    currentFrage.value.selectedCorrectAnswer = [];
+
+    currentFrage.value.options.forEach((option) => {
+      option.optionCorrect = false;
+    });
+  } else if (selectedType.value === "text") {
+    currentFrage.value.selectedCorrectAnswer = null;
+  }
+};
+
 const filteredFragen = computed(() => {
   return fragen.value.filter((frage) =>
       frage.text.toLowerCase().includes(searchQuery.value.toLowerCase())
@@ -204,9 +228,20 @@ onMounted(() => {
             <div class="left-side-upper">
               <textarea id="text" v-model="currentFrage.text"/>
             </div>
+            <label for="question-type" class="labelText">Fragetyp:</label>
+            <select
+                id="question-type"
+                v-model="selectedType"
+                class="dropdown"
+                @change="onTypeChange"
+            >
+              <option value="single">Single Choice</option>
+              <option value="multiple">Multiple Choice</option>
+              <option value="text">Texteingabe</option>
+            </select>
           </div>
 
-          <div class="right-side">
+          <div class="right-side" v-if="selectedType !== 'text'">
             <div class="answers-list-labels">
               <label for="options">Antwort</label>
               <label for="options">Korrekt</label>
@@ -227,7 +262,7 @@ onMounted(() => {
                 <button class="deleteAnswerButton" @click="currentFrage.options.splice(index,1)">X</button>
                 <label>
                   <input
-                      type="radio"
+                      :type="selectedType === 'single' ? 'radio' : 'checkbox'"
                       v-model="currentFrage.selectedCorrectAnswer"
                       :value="index"
                   />
@@ -422,6 +457,8 @@ button:hover {
 .left-side textarea {
   width: 90%;
   padding-bottom: 20%;
+  padding-left: 2%;
+  padding-top: 2%;
   margin-top: 2%;
   border: 2px solid #ccc;
   border-radius: 8px;
@@ -511,6 +548,8 @@ button:hover {
 .answers-list-textinput {
   width: 50%;
   padding-bottom: 4%;
+  padding-left: 1%;
+  padding-top: 1%;
   border: 2px solid #ccc;
   border-radius: 8px;
   font-size: 12px;
@@ -524,5 +563,36 @@ button:hover {
   border-color: #009de0;
   outline: none;
   box-shadow: 0 0 5px rgba(0, 157, 224, 0.5);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+}
+
+.dropdown {
+  margin-top: 2%;
+  width: 35%;
+  padding: 8px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: #f9f9f9;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.dropdown:focus {
+  border-color: #007acc;
+  box-shadow: 0 0 8px rgba(0, 122, 204, 0.6);
+  background-color: #fff;
+}
+
+.dropdown option {
+  font-size: 14px;
+  padding: 8px;
+  background-color: #fff;
 }
 </style>

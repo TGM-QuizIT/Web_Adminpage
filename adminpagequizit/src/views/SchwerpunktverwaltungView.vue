@@ -197,10 +197,10 @@ onMounted(() => {
                 @change="updateSchwerpunkt(schwerpunkt)"
             />
           </label>
-          <button @click="openEditPopup(schwerpunkt)" @click.stop>
+          <button @click.stop="openEditPopup(schwerpunkt)">
             <span class="material-symbols-outlined">edit</span>
           </button>
-          <button @click="deleteSchwerpunkt(schwerpunkt.id)">
+          <button @click.stop="deleteSchwerpunkt(schwerpunkt.id)">
             <span class="material-symbols-outlined">delete</span>
           </button>
         </div>
@@ -435,5 +435,10 @@ button.save-button:active {
 
 .schwerpunkt-item:hover {
   background-color: #cccccc;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
 }
 </style>

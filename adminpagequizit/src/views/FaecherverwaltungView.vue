@@ -286,4 +286,10 @@ button:hover {
   border: 1px solid #ccc;
   border-radius: 5px;
 }
+
+.actions {
+  display: flex;
+  align-items: center;
+}
+
 </style>
