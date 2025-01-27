@@ -32,11 +32,14 @@ const fetchFaecherVomBackend = async () => {
 
     const data = await response.json();
 
+    console.log("Rückgabe vom Backend:", data);
+
     if (data.status === "Success" && data.subjects) {
       faecher.value = data.subjects.map((subject) => ({
         id: subject.subjectId,
         name: subject.subjectName,
-        verantwortlicheLehrkraefte: [],
+        active: subject.subjectActive,
+        imageAddress: subject.subjectImageAddress,
       }));
     } else {
       console.error("Keine Fächer gefunden oder Fehler im Response-Body.");
@@ -50,7 +53,6 @@ const createSubject = () => {
   const newFach = {
     id: Date.now(),
     name: "Neues Fach",
-    verantwortlicheLehrkraefte: ["Lehrkraft 1"],
   };
   faecher.value.push(newFach);
   saveFaecher();
@@ -78,6 +80,41 @@ const navigateToSchwerpunkte = (fach) => {
     query: { fachId: fach.id }
   });
 };
+
+const updateFach = async (fach) => {
+  try {
+    const response = await fetch("https://projekte.tgm.ac.at/quizit/api/subject", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a",
+      },
+      body: JSON.stringify({
+        subjectId: fach.id,
+        subjectActive: fach.active,
+        subjectName: fach.subjectName,
+        subjectImageAddress: fach.imageAddress,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    console.log("Rückgabe vom Backend:", data);
+
+    if (data.status === "Success") {
+      console.log("Fach erfolgreich aktualisiert:", data.subject);
+    } else {
+      console.error("Fehler beim Aktualisieren des Fachs:", data);
+    }
+  } catch (error) {
+    console.error("Fehler beim Aktualisieren des Fachs:", error);
+  }
+};
+
 
 onMounted(() => {
   fetchFaecherVomBackend();
@@ -108,13 +145,19 @@ onMounted(() => {
           v-for="fach in filteredFaecher"
           :key="fach.id"
           @click="navigateToSchwerpunkte(fach)"
+          :class="{ inactive: fach.active === false}"
       >
         <span class="fach-name">{{ fach.name }}</span>
-        <span class="fach-teachers">
-          Verantwortliche Lehrkräfte:
-          {{ fach.verantwortlicheLehrkraefte.join("; ") }}
-        </span>
         <div class="actions">
+          <label>
+            Fach aktiviert:
+            <input
+                type="checkbox"
+                v-model="fach.active"
+                @change="updateFach(fach)"
+                @click.stop
+            />
+          </label>
           <button @click.stop="editFach(fach.id)">
             <span class="material-symbols-outlined">edit</span>
           </button>
@@ -133,6 +176,12 @@ onMounted(() => {
 html,
 body {
   height: 100%;
+}
+
+.inactive {
+  background-color: #e0e0e0;
+  color: #888;
+  opacity: 0.5;
 }
 
 .faecherverwaltungs-container {
@@ -194,11 +243,6 @@ button:hover {
 .fach-name {
   font-weight: bold;
   font-size: 18px;
-}
-
-.fach-teachers {
-  font-size: 14px;
-  color: #666;
 }
 
 .actions button {

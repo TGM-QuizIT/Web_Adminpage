@@ -1,9 +1,11 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
-import { v4 as uuidv4 } from "uuid";
-import { useRoute } from 'vue-router';
+import {ref, computed, onMounted} from "vue";
+import {v4 as uuidv4} from "uuid";
+import {useRoute} from "vue-router";
+import {useRouter} from "vue-router";
 
 const route = useRoute();
+const router = useRouter();
 
 const fachId = route.query.fachId;
 console.log("Schwerpunktverwaltung mit Fach-ID:", fachId);
@@ -11,22 +13,22 @@ console.log("Schwerpunktverwaltung mit Fach-ID:", fachId);
 const schwerpunkte = ref([]);
 const searchQuery = ref("");
 const defaultIds = [];
-
 if (fachId) {
   defaultIds.push(fachId);
 }
 
 const allFocuses = [];
-
 const filteredSchwerpunkte = computed(() => {
   return schwerpunkte.value.filter((schwerpunkt) =>
       schwerpunkt.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
 
+const isEditPopupOpen = ref(false);
+const currentSchwerpunkt = ref({});
+
 const fetchSchwerpunkteVomBackend = async () => {
   try {
-
     for (const id of defaultIds) {
       const response = await fetch(
           `https://projekte.tgm.ac.at/quizit/api/focus?id=${id}`,
@@ -68,6 +70,26 @@ const fetchSchwerpunkteVomBackend = async () => {
   }
 };
 
+const openEditPopup = (schwerpunkt) => {
+  currentSchwerpunkt.value = {...schwerpunkt};
+  isEditPopupOpen.value = true;
+};
+
+const closeEditPopup = () => {
+  isEditPopupOpen.value = false;
+};
+
+const saveEditPopup = () => {
+  const index = schwerpunkte.value.findIndex(
+      (s) => s.id === currentSchwerpunkt.value.id
+  );
+  if (index !== -1) {
+    schwerpunkte.value[index] = {...currentSchwerpunkt.value};
+    updateSchwerpunkt(currentSchwerpunkt.value);
+  }
+  closeEditPopup();
+};
+
 const createSchwerpunkt = () => {
   const newSchwerpunkt = {
     id: uuidv4(),
@@ -78,15 +100,6 @@ const createSchwerpunkt = () => {
   saveSchwerpunkte();
 };
 
-const editSchwerpunkt = (id) => {
-  const schwerpunktToEdit = schwerpunkte.value.find(
-      (schwerpunkt) => schwerpunkt.id === id
-  );
-  if (schwerpunktToEdit) {
-    console.log("Schwerpunkt zum Bearbeiten:", schwerpunktToEdit);
-  }
-};
-
 const deleteSchwerpunkt = (id) => {
   schwerpunkte.value = schwerpunkte.value.filter(
       (schwerpunkt) => schwerpunkt.id !== id
@@ -94,12 +107,7 @@ const deleteSchwerpunkt = (id) => {
   saveSchwerpunkte();
 };
 
-const saveSchwerpunkte = () => {
-  localStorage.setItem("schwerpunkte", JSON.stringify(schwerpunkte.value));
-};
-
 const updateSchwerpunkt = async (schwerpunkt) => {
-
   const updatedFocus = {
     focusId: schwerpunkt.id,
     focusName: schwerpunkt.name,
@@ -109,33 +117,43 @@ const updateSchwerpunkt = async (schwerpunkt) => {
     focusActive: schwerpunkt.active,
   };
 
-  if (schwerpunkt.active !== (updatedFocus.focusActive === false)) {
-    try {
-      const response = await fetch('https://projekte.tgm.ac.at/quizit/api/focus', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': '2e5c9ed5-c5f5-458a-a1cb-40b6235b052a',
-        },
-        body: JSON.stringify(updatedFocus),
-      });
+  try {
+    const response = await fetch(
+        "https://projekte.tgm.ac.at/quizit/api/focus",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a",
+          },
+          body: JSON.stringify(updatedFocus),
+        }
+    );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Fehler beim Aktualisieren des Schwerpunkts: ${errorData.status} - ${errorData.reason}`);
-      }
-
-      const data = await response.json();
-      console.log('Schwerpunkt erfolgreich aktualisiert:', data);
-
-    } catch (error) {
-      console.error('Fehler beim Aktualisieren des Schwerpunkts:', error);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+          `Fehler beim Aktualisieren des Schwerpunkts: ${errorData.status} - ${errorData.reason}`
+      );
     }
-  } else {
-    console.log('Kein Update erforderlich, da keine Änderung beim Status vorliegt.');
+
+    const data = await response.json();
+    console.log("Schwerpunkt erfolgreich aktualisiert:", data);
+  } catch (error) {
+    console.error("Fehler beim Aktualisieren des Schwerpunkts:", error);
   }
 };
 
+const navigateToFragen = (schwerpunkt) => {
+  router.push({
+    path: '/fragenverwaltung',
+    query: { schwerpunktId: schwerpunkt.id }
+  });
+};
+
+const saveSchwerpunkte = () => {
+  localStorage.setItem("schwerpunkte", JSON.stringify(schwerpunkte.value));
+};
 
 onMounted(() => {
   fetchSchwerpunkteVomBackend();
@@ -165,7 +183,9 @@ onMounted(() => {
           class="schwerpunkt-item"
           v-for="schwerpunkt in filteredSchwerpunkte"
           :key="schwerpunkt.id"
-          :class="{ 'inactive': schwerpunkt.active === false }"
+          @click="navigateToFragen(schwerpunkt)"
+          :class="{ inactive: schwerpunkt.active === false }"
+          @click.stop
       >
         <span class="schwerpunkt-name">{{ schwerpunkt.name }}</span>
         <div class="actions">
@@ -177,7 +197,7 @@ onMounted(() => {
                 @change="updateSchwerpunkt(schwerpunkt)"
             />
           </label>
-          <button @click="editSchwerpunkt(schwerpunkt.id)">
+          <button @click="openEditPopup(schwerpunkt)" @click.stop>
             <span class="material-symbols-outlined">edit</span>
           </button>
           <button @click="deleteSchwerpunkt(schwerpunkt.id)">
@@ -188,6 +208,27 @@ onMounted(() => {
     </div>
 
     <p v-else>Keine Schwerpunkte gefunden.</p>
+
+    <div v-if="isEditPopupOpen" class="edit-popup-overlay">
+      <div class="edit-popup">
+        <button class="close-button" @click="closeEditPopup">X</button>
+        <h2>Schwerpunkt bearbeiten</h2>
+        <label for="name">Name:</label>
+        <input id="name" v-model="currentSchwerpunkt.name" type="text" />
+
+        <label for="year">Jahr:</label>
+        <input id="year" v-model="currentSchwerpunkt.year" type="number" />
+
+        <label for="imageAddress">Bild-URL:</label>
+        <input
+            id="imageAddress"
+            v-model="currentSchwerpunkt.imageAddress"
+            type="text"
+        />
+
+        <button @click="saveEditPopup" class="save-button">Speichern</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -254,11 +295,6 @@ button:hover {
   font-size: 18px;
 }
 
-.schwerpunkt-teachers {
-  font-size: 14px;
-  color: #666;
-}
-
 .actions button {
   margin-left: 10px;
   height: 5%;
@@ -299,5 +335,105 @@ button:hover {
   font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 5px;
+}
+
+.edit-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.edit-popup {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  width: 500px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.edit-popup input {
+  width: 100%;
+  max-width: calc(100% - 40px);
+  padding: 12px;
+  margin-top: 5px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+  background-color: #fff;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.edit-popup input:focus {
+  border-color: #009de0;
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 157, 224, 0.5);
+}
+
+.close-button {
+  background: #009de0;
+  border: none;
+  font-size: 20px;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  cursor: pointer;
+  padding: 5px 10px;
+}
+
+.edit-popup label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  color: #000000;
+}
+
+.edit-popup h2 {
+  margin-top: 0;
+  color: #000000;
+  font-size: 22px;
+}
+
+button.save-button {
+  margin-top: 3%;
+  padding: 10px 20px;
+  background-color: #009de0;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-weight: bold;
+  display: inline-block;
+  width: auto;
+}
+
+button.save-button:hover {
+  background-color: #007bb5;
+}
+
+button.save-button:focus {
+  outline: none;
+}
+
+button.save-button:active {
+  background-color: #005f84;
+}
+
+.schwerpunkt-item:hover {
+  background-color: #cccccc;
 }
 </style>

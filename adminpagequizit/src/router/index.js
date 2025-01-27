@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from "vue-router";
-import HomeView from "@/views/HomeView.vue";
 import DatenverwaltungView from "@/views/DatenverwaltungView.vue";
 import BenutzerverwaltungView from "@/views/BenutzerverwaltungView.vue";
 import StatistikenView from "@/views/StatistikenView.vue";
@@ -8,47 +7,62 @@ import LoginView from "@/views/LoginView.vue";
 import BenutzereinstellungenView from "@/views/BenutzereinstellungenView.vue";
 import FaecherverwaltungView from "@/views/FaecherverwaltungView.vue";
 import SchwerpunktverwaltungView from "@/views/SchwerpunktverwaltungView.vue";
+import FragenverwaltungView from "@/views/FragenverwaltungView.vue";
 
 const routes = [
-  { path: "/", component: HomeView, meta: { showNavItems: true } },
   {
     path: "/datenverwaltung",
     component: DatenverwaltungView,
-    meta: { showNavItems: true },
+    meta: { showNavItems: true, requiresAuth: true },
   },
   {
     path: "/faecherverwaltung",
     component: FaecherverwaltungView,
-    meta: { showNavItems: true },
+    meta: { showNavItems: true, requiresAuth: true },
   },
   {
     path: "/benutzerverwaltung",
     component: BenutzerverwaltungView,
-    meta: { showNavItems: true },
+    meta: { showNavItems: true, requiresAuth: true },
   },
   {
     path: "/statistiken",
     component: StatistikenView,
-    meta: { showNavItems: true },
+    meta: { showNavItems: true, requiresAuth: true },
   },
-  { path: "/profil", component: ProfilView, meta: { showNavItems: true } },
+  { path: "/profil", component: ProfilView, meta: { showNavItems: true, requiresAuth: true } },
   { path: "/login", component: LoginView, meta: { showNavItems: false } },
   {
     path: "/benutzereinstellungen",
     component: BenutzereinstellungenView,
-    meta: { showNavItems: true },
+    meta: { showNavItems: true, requiresAuth: true },
   },
   {
     path: "/schwerpunktverwaltung/",
     component: SchwerpunktverwaltungView,
     props: true,
-    meta: { showNavItems: true },
+    meta: { showNavItems: true, requiresAuth: true },
+  },
+  {
+    path: "/fragenverwaltung/",
+    component: FragenverwaltungView,
+    props: true,
+    meta: { showNavItems: true, requiresAuth: true },
   },
 ];
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes,
+});
+
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = localStorage.getItem('authToken');
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    next('/login');
+  } else {
+    next();
+  }
 });
 
 export default router;
