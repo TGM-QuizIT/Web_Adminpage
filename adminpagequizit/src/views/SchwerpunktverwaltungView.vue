@@ -195,6 +195,7 @@ onMounted(() => {
                 type="checkbox"
                 v-model="schwerpunkt.active"
                 @change="updateSchwerpunkt(schwerpunkt)"
+                @click.stop
             />
           </label>
           <button @click.stop="openEditPopup(schwerpunkt)">

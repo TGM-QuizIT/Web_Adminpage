@@ -78,7 +78,6 @@ const fetchFragenVomBackend = async () => {
       mChoice: question.mChoice,
       textInput: question.textInput,
       imageAddress: question.imageAddress,
-      active: question.active,
     }));
 
     console.log("Geladene Fragen:", fragen.value);
@@ -97,6 +96,10 @@ const closeEditPopup = () => {
 };
 
 const saveEditPopup = () => {
+  if (!validateAnswers()) {
+    return;
+  }
+
   const index = fragen.value.findIndex((q) => q.id === currentFrage.value.id);
   if (index !== -1) {
     fragen.value[index] = { ...currentFrage.value };
@@ -109,11 +112,10 @@ const createFrage = () => {
   const newFrage = {
     id: uuidv4(),
     text: "Neue Frage",
-    active: true,
     options: [],
     correctAnswer: null,
   };
-  fragen.value.push(newFrage);
+  fragen.value.unshift(newFrage);
   saveFragen();
 };
 
@@ -132,7 +134,6 @@ const updateFrage = async (frage) => {
     mChoice: frage.mChoice,
     textInput: frage.textInput,
     imageAddress: frage.imageAddress,
-    active: frage.active,
   };
 
   try {
@@ -166,9 +167,31 @@ const saveFragen = () => {
   localStorage.setItem("fragen", JSON.stringify(fragen.value));
 };
 
+const validateAnswers = () => {
+  if (selectedType.value === "single") {
+    if (currentFrage.value.selectedCorrectAnswer === null) {
+      alert("Bitte wählen Sie eine korrekte Antwort aus.");
+      return false;
+    }
+  } else if (selectedType.value === "multiple") {
+    const correctAnswersCount = currentFrage.value.options.filter(option => option.optionCorrect).length;
+    if (correctAnswersCount < 2) {
+      alert("Bitte wählen Sie mindestens zwei korrekte Antworten aus.");
+      return false;
+    }
+  }
+
+  return true;
+};
+
+const addAnswer = () => {
+  currentFrage.value.options.push({ optionText: '', optionCorrect: false });
+};
+
 onMounted(() => {
   fetchFragenVomBackend();
 });
+
 </script>
 
 <template>
@@ -194,18 +217,9 @@ onMounted(() => {
           class="frage-item"
           v-for="frage in filteredFragen"
           :key="frage.id"
-          :class="{ inactive: frage.active === false }"
       >
         <span class="frage-name">{{ frage.text }}</span>
         <div class="actions">
-          <label>
-            Frage aktiviert:
-            <input
-                type="checkbox"
-                v-model="frage.active"
-                @change="updateFrage(frage)"
-            />
-          </label>
           <button @click="openEditPopup(frage)">
             <span class="material-symbols-outlined">edit</span>
           </button>
@@ -278,7 +292,7 @@ onMounted(() => {
                 </label>
 
               </div>
-              <button class="addAnswerButton" @click="currentFrage.options.push('')">Antwort hinzufügen</button>
+              <button class="addAnswerButton" @click="addAnswer">Antwort hinzufügen</button>
             </div>
           </div>
         </div>
@@ -290,11 +304,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.inactive {
-  background-color: #e0e0e0;
-  color: #888;
-  opacity: 0.5;
-}
 
 .fragenverwaltungs-container {
   display: flex;

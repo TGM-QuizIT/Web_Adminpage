@@ -38,7 +38,7 @@ const fetchFaecherVomBackend = async () => {
       faecher.value = data.subjects.map((subject) => ({
         id: subject.subjectId,
         name: subject.subjectName,
-        active: subject.subjectActive,
+        active: subject.subjectActive === 1,
         imageAddress: subject.subjectImageAddress,
       }));
     } else {
