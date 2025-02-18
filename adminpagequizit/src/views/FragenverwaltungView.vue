@@ -78,7 +78,7 @@ const fetchFragenVomBackend = async () => {
       mChoice: question.mChoice,
       textInput: question.textInput,
       imageAddress: question.imageAddress,
-      active: true,
+      active: question.active,
     }));
 
     console.log("Geladene Fragen:", fragen.value);
@@ -226,7 +226,7 @@ onMounted(() => {
           <div class="left-side">
             <label for="text" class="labelText">Fragetext:</label>
             <div class="left-side-upper">
-              <textarea id="text" v-model="currentFrage.text"/>
+              <textarea id="text" v-model="currentFrage.text" maxlength="255"/>
             </div>
             <label for="question-type" class="labelText">Fragetyp:</label>
             <select
@@ -256,15 +256,24 @@ onMounted(() => {
                 <input
                     class="answers-list-textinput"
                     v-model="option.optionText"
+                    maxlength="50"
                     type="text"
                     :placeholder="'Antwort ' + (index + 1)"
                 />
                 <button class="deleteAnswerButton" @click="currentFrage.options.splice(index,1)">X</button>
                 <label>
                   <input
-                      :type="selectedType === 'single' ? 'radio' : 'checkbox'"
-                      v-model="currentFrage.selectedCorrectAnswer"
+                      v-if="selectedType === 'single'"
+                      type="radio"
+                      :name="'single-choice-' + currentFrage.id"
                       :value="index"
+                      v-model="currentFrage.selectedCorrectAnswer"
+                  />
+
+                  <input
+                      v-else
+                      type="checkbox"
+                      v-model="option.optionCorrect"
                   />
                 </label>
 

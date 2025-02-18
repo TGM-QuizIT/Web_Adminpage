@@ -14,7 +14,7 @@
     </div>
 
     <div class="benutzer-liste" v-if="filteredBenutzer.length > 0">
-      <div class="benutzer-item" v-for="user in filteredBenutzer" :key="user.id">
+      <div class="benutzer-item" v-for="user in filteredBenutzer" :key="user.id" :class="{ blocked: user.blocked }">
         <div class="user-info">
           <span class="user-name">{{ user.fullname }}</span>
           <span class="user-email">Email: {{ user.email }}</span>
@@ -23,16 +23,11 @@
           <span class="user-year">Jahrgang: {{ user.year }}</span>
           <span class="user-type">Accounttyp: {{ user.type }}</span>
         </div>
-        <!--
         <div class="actions">
-          <button @click="editUser(user.id)">
-            <span class="material-symbols-outlined">edit</span>
-          </button>
-          <button @click="deleteUser(user.id)">
-            <span class="material-symbols-outlined">delete</span>
+          <button @click="toggleBlockUser(user)" :class="{ blocked: user.blocked }">
+            {{ user.blocked ? 'Entsperren' : 'Sperren' }}
           </button>
         </div>
-        -->
       </div>
     </div>
 
@@ -73,6 +68,7 @@ const fetchBenutzerVomBackend = async () => {
         class: user.userClass,
         type: user.userType,
         email: user.userMail,
+        blocked: user.userBlocked || false, // Hinzufügen des Blockierstatus
       }));
     } else {
       console.error("Keine Benutzer gefunden oder Fehler im Response-Body.");
@@ -92,36 +88,39 @@ const filteredBenutzer = computed(() => {
   });
 });
 
-const fetchBenutzer = () => {
-  const storedBenutzer = localStorage.getItem("benutzer");
+const toggleBlockUser = async (user) => {
+  try {
+    const response = await fetch(
+        `https://projekte.tgm.ac.at/quizit/api/user/block`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a", // API-Key
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            userBlocked: !user.blocked,
+          }),
+        }
+    );
 
-  if (storedBenutzer) {
-    benutzer.value = JSON.parse(storedBenutzer);
-  } else {
-    benutzer.value = [];
+    if (!response.ok) {
+      throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.status === "Success" && data.user) {
+      user.blocked = !user.blocked;
+    } else {
+      console.error("Fehler bei der Sperrung/Entsperrung des Benutzers.");
+    }
+  } catch (error) {
+    console.error("Fehler beim Sperren/Entsperren des Benutzers:", error);
   }
 };
-
-/*
-const editUser = (id) => {
-  const userToEdit = benutzer.value.find((user) => user.id === id);
-  if (userToEdit) {
-    console.log("Benutzer zum Bearbeiten:", userToEdit);
-  }
-};
-
-const deleteUser = (id) => {
-  benutzer.value = benutzer.value.filter((user) => user.id !== id);
-  saveBenutzer();
-};
-
-const saveBenutzer = () => {
-  localStorage.setItem("benutzer", JSON.stringify(benutzer.value));
-};
-*/
 
 onMounted(() => {
-  fetchBenutzer();
   fetchBenutzerVomBackend();
 });
 </script>
@@ -163,6 +162,10 @@ button:hover {
   transition: background-color 0.3s;
 }
 
+button.blocked {
+  background-color: red;
+}
+
 .benutzer-liste {
   height: 70%;
   width: 100%;
@@ -181,6 +184,10 @@ button:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.benutzer-item.blocked {
+  background-color: #f7d7d7;
 }
 
 .user-info {
