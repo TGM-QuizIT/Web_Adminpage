@@ -1,58 +1,98 @@
 <script setup>
-import {ref, computed, onMounted} from "vue";
-import {v4 as uuidv4} from "uuid";
-import {useRoute} from "vue-router";
-import {useRouter} from "vue-router";
+import { ref, computed, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { useRouter } from "vue-router";
+// Import für uuidv4
+import { v4 as uuidv4 } from 'uuid';
 
 const route = useRoute();
 const router = useRouter();
 
-const fachId = route.query.fachId;
-console.log("Schwerpunktverwaltung mit Fach-ID:", fachId);
-
+let fachId = route.query.fachId; // fachId zu let ändern
+const selectedFachId = ref(null);
 const schwerpunkte = ref([]);
 const searchQuery = ref("");
-const defaultIds = [];
-if (fachId) {
-  defaultIds.push(fachId);
-}
-
 const allFocuses = [];
-const filteredSchwerpunkte = computed(() => {
-  return schwerpunkte.value.filter((schwerpunkt) =>
-      schwerpunkt.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
-});
-
+const allSubjects = ref([]);
 const isEditPopupOpen = ref(false);
 const currentSchwerpunkt = ref({});
+const isFachPopupOpen = ref(false); // isFachPopup als ref definieren
+
+const filteredSchwerpunkte = computed(() => {
+  if (searchQuery.value.trim() === "") {
+    return schwerpunkte.value;
+  } else {
+    return schwerpunkte.value.filter((schwerpunkt) =>
+        schwerpunkt.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
+  }
+});
+
+const fetchFaecherVomBackend = async () => {
+  try {
+    const response = await fetch(
+        "https://projekte.tgm.ac.at/quizit/api/subject",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a",
+          },
+        }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    console.log("Rückgabe vom Backend:", data);
+
+    if (data.status === "Success" && data.subjects) {
+      // Fächer in allSubjects speichern
+      allSubjects.value = data.subjects.map((subject) => ({
+        id: subject.subjectId,
+        name: subject.subjectName,
+        active: subject.subjectActive === 1,
+        imageAddress: subject.subjectImageAddress,
+      }));
+    } else {
+      console.error("Keine Fächer gefunden oder Fehler im Response-Body.");
+    }
+  } catch (error) {
+    console.error("Fehler beim Laden der Fächer:", error);
+  }
+};
+
 
 const fetchSchwerpunkteVomBackend = async () => {
+  if (!fachId && selectedFachId.value) {
+    fachId = selectedFachId.value;
+  }
+
   try {
-    for (const id of defaultIds) {
-      const response = await fetch(
-          `https://projekte.tgm.ac.at/quizit/api/focus?id=${id}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a",
-            },
-          }
-      );
+    const response = await fetch(
+        `https://projekte.tgm.ac.at/quizit/api/focus?id=${fachId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a",
+          },
+        }
+    );
 
-      if (!response.ok) {
-        throw new Error(`HTTP-Fehler! Status: ${response.status}`);
-      }
+    if (!response.ok) {
+      throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+    }
 
-      const data = await response.json();
-      console.log(data);
+    const data = await response.json();
 
-      if (data.status === "Success" && data.focuses) {
-        allFocuses.push(...data.focuses);
-      } else {
-        console.warn(`Keine Schwerpunkte für ID ${id} gefunden.`);
-      }
+    if (data.status === "Success" && data.focuses) {
+      allFocuses.push(...data.focuses);
+    } else {
+      console.warn(`Keine Schwerpunkte für Fach-ID ${fachId} gefunden.`);
     }
 
     schwerpunkte.value = allFocuses.map((focusObject) => ({
@@ -70,8 +110,23 @@ const fetchSchwerpunkteVomBackend = async () => {
   }
 };
 
+// Fach Popup
+const openFachPopup = () => {
+  isFachPopupOpen.value = true;
+};
+
+const closeFachPopup = () => {
+  isFachPopupOpen.value = false;
+};
+
+const selectFach = (fachId) => {
+  selectedFachId.value = fachId;
+  closeFachPopup();
+  fetchSchwerpunkteVomBackend();
+};
+
 const openEditPopup = (schwerpunkt) => {
-  currentSchwerpunkt.value = {...schwerpunkt};
+  currentSchwerpunkt.value = { ...schwerpunkt };
   isEditPopupOpen.value = true;
 };
 
@@ -84,7 +139,7 @@ const saveEditPopup = () => {
       (s) => s.id === currentSchwerpunkt.value.id
   );
   if (index !== -1) {
-    schwerpunkte.value[index] = {...currentSchwerpunkt.value};
+    schwerpunkte.value[index] = { ...currentSchwerpunkt.value };
     updateSchwerpunkt(currentSchwerpunkt.value);
   }
   closeEditPopup();
@@ -92,7 +147,7 @@ const saveEditPopup = () => {
 
 const createSchwerpunkt = () => {
   const newSchwerpunkt = {
-    id: uuidv4(),
+    id: uuidv4(), // uuidv4 verwenden
     name: "Neuer Schwerpunkt",
     active: 1,
   };
@@ -146,8 +201,8 @@ const updateSchwerpunkt = async (schwerpunkt) => {
 
 const navigateToFragen = (schwerpunkt) => {
   router.push({
-    path: '/fragenverwaltung',
-    query: { schwerpunktId: schwerpunkt.id }
+    path: "/fragenverwaltung",
+    query: { schwerpunktId: schwerpunkt.id },
   });
 };
 
@@ -156,7 +211,12 @@ const saveSchwerpunkte = () => {
 };
 
 onMounted(() => {
-  fetchSchwerpunkteVomBackend();
+  fetchFaecherVomBackend();
+  if (!fachId) {
+    openFachPopup();
+  } else {
+    fetchSchwerpunkteVomBackend();
+  }
 });
 </script>
 
@@ -185,7 +245,6 @@ onMounted(() => {
           :key="schwerpunkt.id"
           @click="navigateToFragen(schwerpunkt)"
           :class="{ inactive: schwerpunkt.active === false }"
-          @click.stop
       >
         <span class="schwerpunkt-name">{{ schwerpunkt.name }}</span>
         <div class="actions">
@@ -209,6 +268,15 @@ onMounted(() => {
     </div>
 
     <p v-else>Keine Schwerpunkte gefunden.</p>
+
+    <div v-if="isFachPopupOpen" class="fach-popup-overlay">
+      <div class="fach-popup">
+        <h2>Bitte Fach auswählen</h2>
+        <div v-for="fach in allSubjects" :key="fach.id">
+          <button class="subjectSelectButton" @click="selectFach(fach.id)">{{ fach.name }}</button>
+        </div>
+      </div>
+    </div>
 
     <div v-if="isEditPopupOpen" class="edit-popup-overlay">
       <div class="edit-popup">
@@ -238,6 +306,57 @@ onMounted(() => {
   background-color: #e0e0e0;
   color: #888;
   opacity: 0.5;
+}
+
+.subjectSelectButton {
+  width: 100%;
+}
+
+.fach-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.fach-popup {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 400px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.fach-popup button {
+  padding: 10px;
+  background-color: #009de0;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.fach-popup button:hover {
+  background-color: #007bb5;
+  transition: background-color 0.3s;
+}
+
+.fach-popup h2 {
+  color: #000;
+  font-size: 20px;
+  margin-bottom: 10px;
 }
 
 .schwerpunkteverwaltungs-container {
