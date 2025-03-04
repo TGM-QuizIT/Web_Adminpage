@@ -2,26 +2,90 @@
 import { useRouter } from "vue-router";
 import { ref, computed, onMounted } from "vue";
 
+const apiUrl = process.env.VUE_APP_API_URL;
+const authKey = process.env.VUE_APP_AUTH_KEY;
+
 const router = useRouter();
 
+const isEditPopupOpen = ref(false);
 const faecher = ref([]);
 const searchQuery = ref("");
+const currentFach = ref({ id: null, name: "", active: 1, imageAddress: "" });
+const deleteConfirmationOpen = ref(false);
+const fachToDelete = ref(null);
 
 const filteredFaecher = computed(() => {
   return faecher.value.filter((fach) =>
-      fach.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+      fach.name && fach.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
 
-const fetchFaecherVomBackend = async () => {
+const closeEditPopup = () => {
+  isEditPopupOpen.value = false;
+};
+
+const saveEditPopup = async () => {
+  if (!currentFach.value.name.trim()) {
+    alert("Bitte einen Namen für das Fach eingeben.");
+    return;
+  }
+
+  if (currentFach.value.id) {
+    const index = faecher.value.findIndex(
+        (f) => f.id === currentFach.value.id
+    );
+    if (index !== -1) {
+      faecher.value[index] = { ...currentFach.value };
+      await updateFach(currentFach.value);
+    }
+  } else {
+    // Create new Fach
+    const newSubject = {
+      subjectName: currentFach.value.name,
+      subjectImageAddress: currentFach.value.imageAddress || "https://www.google.com"
+    };
+
+    try {
+      const response = await fetch(`${apiUrl}/subject`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `${authKey}`,
+        },
+        body: JSON.stringify(newSubject),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Fach erfolgreich erstellt:", data);
+
+      if (data.status === "Success") {
+        faecher.value.push({
+          id: data.subject.subjectId,
+          name: data.subject.subjectName,
+          active: data.subject.subjectActive === 1,
+          imageAddress: data.subject.subjectImageAddress,
+        });
+      }
+    } catch (error) {
+      console.error("Fehler beim Erstellen des Fachs:", error);
+    }
+  }
+  closeEditPopup();
+};
+
+const fetchFaecherVomBackend = async () =>  {
   try {
     const response = await fetch(
-        "https://projekte.tgm.ac.at/quizit/api/subject",
+        `${apiUrl}/subject`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a",
+            authorization: `${authKey}`,
           },
         }
     );
@@ -50,28 +114,43 @@ const fetchFaecherVomBackend = async () => {
 };
 
 const createSubject = () => {
-  const newFach = {
-    id: Date.now(),
-    name: "Neues Fach",
+  currentFach.value = {
+    id: null,
+    name: "",
+    active: 1,
+    imageAddress: "",
   };
-  faecher.value.push(newFach);
-  saveFaecher();
+  isEditPopupOpen.value = true;
 };
 
-const editFach = (id) => {
-  const fachToEdit = faecher.value.find((fach) => fach.id === id);
-  if (fachToEdit) {
-    console.log("Fach zum Bearbeiten:", fachToEdit);
+const deleteFach = async () => {
+  try {
+    const response = await fetch(`https://projekte.tgm.ac.at/quizit/api/subject?id=${fachToDelete.value}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `${authKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Fehler beim Löschen des Fachs! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.status === "Success") {
+      faecher.value = faecher.value.filter((fach) => fach.id !== fachToDelete.value);
+      console.log("Fach erfolgreich gelöscht:", fachToDelete.value);
+      fachToDelete.value = null;
+    } else {
+      console.error("Fehler beim Löschen des Fachs:", data);
+    }
+  } catch (error) {
+    console.error("Fehler beim Löschen des Fachs:", error);
+  } finally {
+    deleteConfirmationOpen.value = false;
   }
-};
-
-const deleteFach = (id) => {
-  faecher.value = faecher.value.filter((fach) => fach.id !== id);
-  saveFaecher();
-};
-
-const saveFaecher = () => {
-  localStorage.setItem("faecher", JSON.stringify(faecher.value));
 };
 
 const navigateToSchwerpunkte = (fach) => {
@@ -82,19 +161,21 @@ const navigateToSchwerpunkte = (fach) => {
 };
 
 const updateFach = async (fach) => {
+  const updatedSubject = {
+    subjectId: fach.id,
+    subjectActive: fach.active,
+    subjectName: fach.name,
+    subjectImageAddress: fach.imageAddress,
+  };
+
   try {
-    const response = await fetch("https://projekte.tgm.ac.at/quizit/api/subject", {
+    const response = await fetch(`${apiUrl}/subject`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a",
+        authorization: `${authKey}`,
       },
-      body: JSON.stringify({
-        subjectId: fach.id,
-        subjectActive: fach.active,
-        subjectName: fach.subjectName,
-        subjectImageAddress: fach.imageAddress,
-      }),
+      body: JSON.stringify(updatedSubject),
     });
 
     if (!response.ok) {
@@ -115,6 +196,15 @@ const updateFach = async (fach) => {
   }
 };
 
+const editFach = (fach) => {
+  currentFach.value = { ...fach };
+  isEditPopupOpen.value = true;
+};
+
+const confirmDelete = (fachId) => {
+  fachToDelete.value = fachId;
+  deleteConfirmationOpen.value = true;
+};
 
 onMounted(() => {
   fetchFaecherVomBackend();
@@ -158,10 +248,12 @@ onMounted(() => {
                 @click.stop
             />
           </label>
-          <button @click.stop="editFach(fach.id)">
+
+          <button @click.stop="editFach(fach)">
             <span class="material-symbols-outlined">edit</span>
           </button>
-          <button @click.stop="deleteFach(fach.id)">
+
+          <button @click.stop="confirmDelete(fach.id)">
             <span class="material-symbols-outlined">delete</span>
           </button>
         </div>
@@ -169,6 +261,37 @@ onMounted(() => {
     </div>
 
     <p v-else>Keine Fächer gefunden.</p>
+
+    <div v-if="deleteConfirmationOpen" class="confirmation-popup">
+      <div class="confirmation-box">
+        <p>Fach löschen?</p>
+        <button @click="deleteFach">Yes</button>
+        <button @click="deleteConfirmationOpen = false">No</button>
+      </div>
+    </div>
+
+    <div v-if="isEditPopupOpen" class="edit-popup-overlay">
+      <div class="edit-popup">
+        <button class="close-button" @click="closeEditPopup">X</button>
+
+        <h2>{{ currentFach.id ? `Fach bearbeiten: ${currentFach.name}` : 'Fach erstellen' }}</h2>
+
+        <div v-if="!currentFach.id">
+          <label for="name">Name:</label>
+          <input id="name" v-model="currentFach.name" type="text" />
+        </div>
+
+        <div v-if="currentFach.id">
+          <label for="image">Bild-Link:</label>
+          <input id="image" v-model="currentFach.imageAddress" type="text" />
+        </div>
+
+        <button @click="saveEditPopup" class="save-button">Speichern</button>
+      </div>
+    </div>
+
+
+
   </div>
 </template>
 
@@ -291,5 +414,150 @@ button:hover {
   display: flex;
   align-items: center;
 }
+.edit-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.edit-popup {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  width: 500px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.edit-popup h2 {
+  margin-top: 0;
+  color: #000000;
+  font-size: 22px;
+}
+
+.edit-popup label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  color: #000000;
+}
+
+.edit-popup input {
+  width: 100%;
+  max-width: calc(100% - 40px);
+  padding: 12px;
+  margin-top: 5px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+  background-color: #fff;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+button.save-button {
+  margin-top: 3%;
+  padding: 10px 20px;
+  background-color: #009de0;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-weight: bold;
+  display: inline-block;
+  width: auto;
+}
+
+button.save-button:hover {
+  background-color: #007bb5;
+}
+
+button.save-button:focus {
+  outline: none;
+}
+
+button.close-button:hover {
+  background-color: #007bb5;
+  transition: background-color 0.3s;
+}
+
+button.save-button:active {
+  background-color: #005f84;
+}
+
+button.close-button {
+  background: #009de0;
+  border: none;
+  font-size: 20px;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  cursor: pointer;
+  padding: 5px 10px;
+}
+
+.confirmation-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.confirmation-box {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  width: 300px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.confirmation-box p {
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.confirmation-box button {
+  padding: 10px 20px;
+  margin-top: 10px;
+  cursor: pointer;
+  background-color: #009de0;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.confirmation-box button:hover {
+  background-color: #0092e0;
+}
+
+.confirmation-box button:nth-child(2) {
+  background-color: #f44336;
+}
+
+.confirmation-box button:nth-child(2):hover {
+  background-color: #e53935;
+}
+
 
 </style>
