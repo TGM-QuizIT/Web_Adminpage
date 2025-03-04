@@ -2,13 +2,13 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
-// Import für uuidv4
-import { v4 as uuidv4 } from 'uuid';
 
 const route = useRoute();
 const router = useRouter();
+const apiUrl = process.env.VUE_APP_API_URL;
+const authKey = process.env.VUE_APP_AUTH_KEY;
 
-let fachId = route.query.fachId; // fachId zu let ändern
+let fachId = route.query.fachId;
 const selectedFachId = ref(null);
 const schwerpunkte = ref([]);
 const searchQuery = ref("");
@@ -16,7 +16,9 @@ const allFocuses = [];
 const allSubjects = ref([]);
 const isEditPopupOpen = ref(false);
 const currentSchwerpunkt = ref({});
-const isFachPopupOpen = ref(false); // isFachPopup als ref definieren
+const isFachPopupOpen = ref(false);
+const deleteConfirmationOpen = ref(false);
+const fachToDelete = ref(null);
 
 const filteredSchwerpunkte = computed(() => {
   if (searchQuery.value.trim() === "") {
@@ -28,15 +30,25 @@ const filteredSchwerpunkte = computed(() => {
   }
 });
 
+import { watch } from "vue";
+
+watch(
+    () => currentSchwerpunkt.value.year,
+    (newValue) => {
+      if (newValue < 1) currentSchwerpunkt.value.year = 1;
+      if (newValue > 5) currentSchwerpunkt.value.year = 5;
+    }
+);
+
 const fetchFaecherVomBackend = async () => {
   try {
     const response = await fetch(
-        "https://projekte.tgm.ac.at/quizit/api/subject",
+        `${apiUrl}/subject`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a",
+            authorization: `${authKey}`,
           },
         }
     );
@@ -50,7 +62,6 @@ const fetchFaecherVomBackend = async () => {
     console.log("Rückgabe vom Backend:", data);
 
     if (data.status === "Success" && data.subjects) {
-      // Fächer in allSubjects speichern
       allSubjects.value = data.subjects.map((subject) => ({
         id: subject.subjectId,
         name: subject.subjectName,
@@ -73,12 +84,12 @@ const fetchSchwerpunkteVomBackend = async () => {
 
   try {
     const response = await fetch(
-        `https://projekte.tgm.ac.at/quizit/api/focus?id=${fachId}`,
+        `${apiUrl}/focus?id=${fachId}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a",
+            authorization: `${authKey}`,
           },
         }
     );
@@ -110,7 +121,6 @@ const fetchSchwerpunkteVomBackend = async () => {
   }
 };
 
-// Fach Popup
 const openFachPopup = () => {
   isFachPopupOpen.value = true;
 };
@@ -127,6 +137,7 @@ const selectFach = (fachId) => {
 
 const openEditPopup = (schwerpunkt) => {
   currentSchwerpunkt.value = { ...schwerpunkt };
+  popupTitle.value = `Schwerpunkt bearbeiten:\n${schwerpunkt.name}`;
   isEditPopupOpen.value = true;
 };
 
@@ -134,32 +145,60 @@ const closeEditPopup = () => {
   isEditPopupOpen.value = false;
 };
 
-const saveEditPopup = () => {
-  const index = schwerpunkte.value.findIndex(
-      (s) => s.id === currentSchwerpunkt.value.id
-  );
-  if (index !== -1) {
-    schwerpunkte.value[index] = { ...currentSchwerpunkt.value };
-    updateSchwerpunkt(currentSchwerpunkt.value);
+const saveEditPopup = async () => {
+
+  try {
+    const response = await fetch(`${apiUrl}/focus`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "authorization": `${authKey}`,
+      },
+      body: JSON.stringify({
+        focusName: currentSchwerpunkt.value.name,
+        focusYear: currentSchwerpunkt.value.year,
+        focusImageAddress: currentSchwerpunkt.value.imageAddress,
+        subjectId: parseInt(fachId.valueOf(), 10),
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Fehler: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("API Response:", data);
+
+    if (data.status === "Success" && data.focus) {
+      schwerpunkte.value.push({
+        id: data.focus.focusId,
+        name: data.focus.focusName,
+        year: data.focus.focusYear,
+        imageAddress: data.focus.focusImageAddress,
+        subjectId: data.focus.subjectId,
+        active: data.focus.focusActive ? 1 : 0,
+      });
+    }
+  } catch (error) {
+    console.error("Fehler beim Erstellen des Schwerpunkts:", error);
   }
+
   closeEditPopup();
 };
 
+const popupTitle = ref("Schwerpunkt erstellen");
+
 const createSchwerpunkt = () => {
-  const newSchwerpunkt = {
-    id: uuidv4(), // uuidv4 verwenden
-    name: "Neuer Schwerpunkt",
+  currentSchwerpunkt.value = {
+    id: null,
+    name: "",
+    year: null,
+    imageAddress: null,
+    subjectId: null,
     active: 1,
   };
-  schwerpunkte.value.push(newSchwerpunkt);
-  saveSchwerpunkte();
-};
-
-const deleteSchwerpunkt = (id) => {
-  schwerpunkte.value = schwerpunkte.value.filter(
-      (schwerpunkt) => schwerpunkt.id !== id
-  );
-  saveSchwerpunkte();
+  popupTitle.value = "Schwerpunkt erstellen";
+  isEditPopupOpen.value = true;
 };
 
 const updateSchwerpunkt = async (schwerpunkt) => {
@@ -174,12 +213,12 @@ const updateSchwerpunkt = async (schwerpunkt) => {
 
   try {
     const response = await fetch(
-        "https://projekte.tgm.ac.at/quizit/api/focus",
+        `${apiUrl}/focus`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a",
+            Authorization: `${authKey}`,
           },
           body: JSON.stringify(updatedFocus),
         }
@@ -206,18 +245,29 @@ const navigateToFragen = (schwerpunkt) => {
   });
 };
 
-const saveSchwerpunkte = () => {
-  localStorage.setItem("schwerpunkte", JSON.stringify(schwerpunkte.value));
+const confirmDelete = (fachId) => {
+  fachToDelete.value = fachId;
+  deleteConfirmationOpen.value = true;
 };
 
 onMounted(() => {
+  if (route.query.fachId) {
+    fachId = route.query.fachId;
+    selectedFachId.value = fachId;
+  }
+
+
+  console.log(fachId)
+
   fetchFaecherVomBackend();
+
   if (!fachId) {
     openFachPopup();
   } else {
     fetchSchwerpunkteVomBackend();
   }
 });
+
 </script>
 
 <template>
@@ -260,7 +310,7 @@ onMounted(() => {
           <button @click.stop="openEditPopup(schwerpunkt)">
             <span class="material-symbols-outlined">edit</span>
           </button>
-          <button @click.stop="deleteSchwerpunkt(schwerpunkt.id)">
+          <button @click.stop="confirmDelete(schwerpunkt.id)">
             <span class="material-symbols-outlined">delete</span>
           </button>
         </div>
@@ -278,15 +328,23 @@ onMounted(() => {
       </div>
     </div>
 
+    <div v-if="deleteConfirmationOpen" class="confirmation-popup">
+      <div class="confirmation-box">
+        <p>Fach löschen?</p>
+        <button @click="deleteFach">Yes</button>
+        <button @click="deleteConfirmationOpen = false">No</button>
+      </div>
+    </div>
+
     <div v-if="isEditPopupOpen" class="edit-popup-overlay">
       <div class="edit-popup">
         <button class="close-button" @click="closeEditPopup">X</button>
-        <h2>Schwerpunkt bearbeiten</h2>
+        <h2>{{ popupTitle }}</h2>
         <label for="name">Name:</label>
         <input id="name" v-model="currentSchwerpunkt.name" type="text" />
 
         <label for="year">Jahr:</label>
-        <input id="year" v-model="currentSchwerpunkt.year" type="number" />
+        <input id="year" v-model="currentSchwerpunkt.year" type="number" min="1" max="5" />
 
         <label for="imageAddress">Bild-URL:</label>
         <input
@@ -560,5 +618,9 @@ button.save-button:active {
 .actions {
   display: flex;
   align-items: center;
+}
+
+.edit-popup h2 {
+  white-space: pre-line;
 }
 </style>
