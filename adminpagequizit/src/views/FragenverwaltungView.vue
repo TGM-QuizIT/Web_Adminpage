@@ -152,9 +152,19 @@ const openEditPopup = (frage) => {
 };
 
 const openCreatePopup = () => {
-  currentFrage.value = { text: "", options: [], selectedCorrectAnswer: null };
+  currentFrage.value = {
+    text: "",
+    options: [
+      { optionText: '', optionCorrect: false },
+      { optionText: '', optionCorrect: false },
+      { optionText: '', optionCorrect: false },
+      { optionText: '', optionCorrect: false }
+    ],
+    selectedCorrectAnswer: null
+  };
   isEditPopupOpen.value = true;
 };
+
 
 const closeEditPopup = () => {
   isEditPopupOpen.value = false;
