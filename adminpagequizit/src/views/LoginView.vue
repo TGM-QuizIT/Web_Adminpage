@@ -40,6 +40,7 @@ const router = useRouter();
 const username = ref("");
 const password = ref("");
 const errorMessage = ref("");
+const apiUrl = process.env.VUE_APP_API_URL;
 
 async function tryLogin(event) {
   event.preventDefault();
@@ -47,7 +48,7 @@ async function tryLogin(event) {
 
   try {
     const response = await axios.post(
-        "https://projekte.tgm.ac.at/quizit/api/user/login",
+        `${apiUrl}/user/login`,
         {
           userName: username.value,
           password: password.value,
