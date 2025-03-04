@@ -1,10 +1,10 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { v4 as uuidv4 } from "uuid";
 import { useRoute } from "vue-router";
+const apiUrl = process.env.VUE_APP_API_URL;
+const authKey = process.env.VUE_APP_AUTH_KEY;
 
 const route = useRoute();
-
 const schwerpunktId = route.query.schwerpunktId;
 
 const fragen = ref([]);
@@ -12,6 +12,11 @@ const searchQuery = ref("");
 const allQuestions = [];
 
 const selectedType = ref("single");
+const isEditPopupOpen = ref(false);
+const currentFrage = ref({});
+
+const fachToDelete = ref(null);
+const deleteConfirmationOpen = ref(false);
 
 const onTypeChange = () => {
   if (selectedType.value === "single") {
@@ -26,7 +31,6 @@ const onTypeChange = () => {
     });
   } else if (selectedType.value === "multiple") {
     currentFrage.value.selectedCorrectAnswer = [];
-
     currentFrage.value.options.forEach((option) => {
       option.optionCorrect = false;
     });
@@ -36,24 +40,81 @@ const onTypeChange = () => {
 };
 
 const filteredFragen = computed(() => {
-  return fragen.value.filter((frage) =>
-      frage.text.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
+  return fragen.value.filter((frage) => frage.text && frage.text.toLowerCase().includes(searchQuery.value.toLowerCase()));
 });
 
-const isEditPopupOpen = ref(false);
-const currentFrage = ref({});
+const saveEditPopup = async () => {
+  if (!validateAnswers()) {
+    return;
+  }
+
+  const questionData = {
+    questionText: currentFrage.value.text,
+    options: currentFrage.value.options.map(option => ({
+      optionText: option.optionText,
+      optionCorrect: option.optionCorrect
+    })),
+    focusId: parseInt(schwerpunktId.valueOf(), 10),
+    mChoice: selectedType.value === "multiple",
+    textInput: selectedType.value === "text",
+    imageAddress: currentFrage.value.imageAddress || "https://www.google.com/image.jpeg",
+  };
+
+  try {
+    const url = currentFrage.value.id
+        ? `${apiUrl}/question/${currentFrage.value.id}`
+        : `${apiUrl}/question?focusId=${schwerpunktId}`;
+
+    const method = currentFrage.value.id ? "PUT" : "POST";
+
+    const response = await fetch(url, {
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `${authKey}`,
+      },
+      body: JSON.stringify(questionData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Fehler beim Speichern der Frage. Status: ${response.status}`);
+    }
+
+    const responseData = await response.json();
+
+    if (responseData.status === "Success") {
+      if (!currentFrage.value.id) {
+        fragen.value.unshift(responseData.question);
+      } else {
+        const index = fragen.value.findIndex((q) => q.id === currentFrage.value.id);
+        if (index !== -1) {
+          fragen.value[index] = responseData.question;
+        }
+      }
+
+      allQuestions.length = 0;
+
+      await fetchFragenVomBackend();
+      closeEditPopup();
+    } else {
+      alert("Fehler beim Speichern der Frage.");
+    }
+  } catch (error) {
+    console.error("Fehler beim Speichern der Frage:", error);
+    alert("Es gab einen Fehler beim Speichern der Frage.");
+  }
+};
 
 const fetchFragenVomBackend = async () => {
   try {
-    const url = new URL("https://projekte.tgm.ac.at/quizit/api/question/focus");
+    const url = new URL(`${apiUrl}/question/focus`);
     url.searchParams.append("id", schwerpunktId);
 
     const response = await fetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a",
+        authorization: `${authKey}`,
       },
     });
 
@@ -67,7 +128,6 @@ const fetchFragenVomBackend = async () => {
     } else {
       console.warn("Keine Fragen gefunden.");
     }
-
 
     fragen.value = allQuestions.map((question) => ({
       id: question.questionId,
@@ -91,80 +151,46 @@ const openEditPopup = (frage) => {
   isEditPopupOpen.value = true;
 };
 
+const openCreatePopup = () => {
+  currentFrage.value = { text: "", options: [], selectedCorrectAnswer: null };
+  isEditPopupOpen.value = true;
+};
+
 const closeEditPopup = () => {
   isEditPopupOpen.value = false;
 };
 
-const saveEditPopup = () => {
-  if (!validateAnswers()) {
-    return;
-  }
-
-  const index = fragen.value.findIndex((q) => q.id === currentFrage.value.id);
-  if (index !== -1) {
-    fragen.value[index] = { ...currentFrage.value };
-    updateFrage(currentFrage.value);
-  }
-  closeEditPopup();
+const confirmDelete = (frageId) => {
+  fachToDelete.value = frageId;
+  deleteConfirmationOpen.value = true;
 };
 
-const createFrage = () => {
-  const newFrage = {
-    id: uuidv4(),
-    text: "Neue Frage",
-    options: [],
-    correctAnswer: null,
-  };
-  fragen.value.unshift(newFrage);
-  saveFragen();
-};
-
-const deleteFrage = (id) => {
-  fragen.value = fragen.value.filter((frage) => frage.id !== id);
-  saveFragen();
-};
-
-const updateFrage = async (frage) => {
-  const updatedQuestion = {
-    questionId: frage.id,
-    questionText: frage.text,
-    options: frage.options,
-    correctAnswer: frage.correctAnswer,
-    focusId: frage.focusId,
-    mChoice: frage.mChoice,
-    textInput: frage.textInput,
-    imageAddress: frage.imageAddress,
-  };
-
+const deleteQuestion = async () => {
   try {
-    const response = await fetch(
-        "https://projekte.tgm.ac.at/quizit/api/question/subject",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a",
-          },
-          body: JSON.stringify(updatedQuestion),
-        }
-    );
+    const response = await fetch(`${apiUrl}/question?id=${fachToDelete.value}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `${authKey}`,
+      },
+    });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-          `Fehler beim Aktualisieren der Frage: ${errorData.status} - ${errorData.reason}`
-      );
+      throw new Error(`Fehler beim Löschen der Frage. Status: ${response.status}`);
     }
 
-    const data = await response.json();
-    console.log("Frage erfolgreich aktualisiert:", data);
-  } catch (error) {
-    console.error("Fehler beim Aktualisieren der Frage:", error);
-  }
-};
+    const responseData = await response.json();
 
-const saveFragen = () => {
-  localStorage.setItem("fragen", JSON.stringify(fragen.value));
+    if (responseData.status === "Success") {
+      fragen.value = fragen.value.filter((frage) => frage.id !== fachToDelete.value);
+      deleteConfirmationOpen.value = false;
+    } else {
+      alert("Fehler beim Löschen der Frage.");
+    }
+  } catch (error) {
+    console.error("Fehler beim Löschen der Frage:", error);
+    alert("Es gab einen Fehler beim Löschen der Frage.");
+  }
 };
 
 const validateAnswers = () => {
@@ -191,14 +217,14 @@ const addAnswer = () => {
 onMounted(() => {
   fetchFragenVomBackend();
 });
-
 </script>
+
 
 <template>
   <div class="fragenverwaltungs-container">
     <h1>Fragenverwaltung</h1>
     <div class="header">
-      <button @click="createFrage" class="frage-create-button">
+      <button @click="openCreatePopup" class="frage-create-button">
         <span class="material-symbols-outlined">post_add</span>Frage erstellen
       </button>
       <div class="search-container">
@@ -223,8 +249,8 @@ onMounted(() => {
           <button @click="openEditPopup(frage)">
             <span class="material-symbols-outlined">edit</span>
           </button>
-          <button @click="deleteFrage(frage.id)">
-            <span class="material-symbols-outlined">delete</span>
+          <button @click="confirmDelete(frage.id)">
+          <span class="material-symbols-outlined">delete</span>
           </button>
         </div>
       </div>
@@ -232,16 +258,23 @@ onMounted(() => {
 
     <p v-else>Keine Fragen gefunden.</p>
 
+    <div v-if="deleteConfirmationOpen" class="confirmation-popup">
+      <div class="confirmation-box">
+        <p>Frage löschen?</p>
+        <button @click="deleteQuestion">Ja</button>
+        <button @click="deleteConfirmationOpen = false">Nein</button>
+      </div>
+    </div>
+
+
     <div v-if="isEditPopupOpen" class="edit-popup-overlay">
       <div class="edit-popup">
         <button class="close-button" @click="closeEditPopup">X</button>
-        <h2>Frage bearbeiten</h2>
+        <h2>{{ currentFrage.id ? 'Frage bearbeiten' : 'Frage erstellen' }}</h2>
         <div class="popup-content">
           <div class="left-side">
             <label for="text" class="labelText">Fragetext:</label>
-            <div class="left-side-upper">
-              <textarea id="text" v-model="currentFrage.text" maxlength="255"/>
-            </div>
+            <textarea id="text" v-model="currentFrage.text" maxlength="255" />
             <label for="question-type" class="labelText">Fragetyp:</label>
             <select
                 id="question-type"
@@ -274,7 +307,7 @@ onMounted(() => {
                     type="text"
                     :placeholder="'Antwort ' + (index + 1)"
                 />
-                <button class="deleteAnswerButton" @click="currentFrage.options.splice(index,1)">X</button>
+                <button class="deleteAnswerButton" @click="currentFrage.options.splice(index, 1)">X</button>
                 <label>
                   <input
                       v-if="selectedType === 'single'"
@@ -283,14 +316,12 @@ onMounted(() => {
                       :value="index"
                       v-model="currentFrage.selectedCorrectAnswer"
                   />
-
                   <input
                       v-else
                       type="checkbox"
                       v-model="option.optionCorrect"
                   />
                 </label>
-
               </div>
               <button class="addAnswerButton" @click="addAnswer">Antwort hinzufügen</button>
             </div>
@@ -300,8 +331,10 @@ onMounted(() => {
         <button @click="saveEditPopup" class="save-button">Speichern</button>
       </div>
     </div>
+
   </div>
 </template>
+
 
 <style scoped>
 
@@ -612,5 +645,55 @@ button:hover {
   font-size: 14px;
   padding: 8px;
   background-color: #fff;
+}
+
+.confirmation-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.confirmation-box {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  width: 300px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.confirmation-box p {
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.confirmation-box button {
+  padding: 10px 20px;
+  margin-top: 10px;
+  cursor: pointer;
+  background-color: #009de0;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.confirmation-box button:hover {
+  background-color: #0092e0;
+}
+
+.confirmation-box button:nth-child(2) {
+  background-color: #f44336;
+}
+
+.confirmation-box button:nth-child(2):hover {
+  background-color: #e53935;
 }
 </style>
