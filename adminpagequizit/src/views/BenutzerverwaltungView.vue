@@ -1,3 +1,95 @@
+<script setup>
+import { ref, computed, onMounted } from "vue";
+
+const benutzer = ref([]);
+const searchQuery = ref("");
+const apiUrl = process.env.VUE_APP_API_URL;
+const authKey = process.env.VUE_APP_AUTH_KEY;
+
+const fetchBenutzerVomBackend = async () => {
+  try {
+    const response = await fetch(
+        `${apiUrl}/user`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: `${authKey}`,
+          },
+        }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.status === "Success" && data.users) {
+      benutzer.value = data.users.map((user) => ({
+        id: user.userId,
+        username: user.userName,
+        fullname: user.userFullname || "Unbekannter Name",
+        year: user.userYear,
+        class: user.userClass,
+        type: user.userType,
+        email: user.userMail,
+        blocked: user.userBlocked || false,
+      }));
+    } else {
+      console.error("Keine Benutzer gefunden oder Fehler im Response-Body.");
+    }
+  } catch (error) {
+    console.error("Fehler beim Laden der Benutzer:", error);
+  }
+};
+
+const filteredBenutzer = computed(() => {
+  return benutzer.value.filter((user) => {
+    return (
+        user.fullname.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        user.username.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
+  });
+});
+
+const toggleBlockUser = async (user) => {
+  try {
+    const response = await fetch(
+        `${apiUrl}/user/block`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: `${authKey}`,
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            userBlocked: !user.blocked,
+          }),
+        }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.status === "Success" && data.user) {
+      user.blocked = !user.blocked;
+    } else {
+      console.error("Fehler bei der Sperrung/Entsperrung des Benutzers.");
+    }
+  } catch (error) {
+    console.error("Fehler beim Sperren/Entsperren des Benutzers:", error);
+  }
+};
+
+onMounted(() => {
+  fetchBenutzerVomBackend();
+});
+</script>
+
 <template>
   <div class="benutzerverwaltungs-container">
     <h1>Benutzerverwaltung</h1>
@@ -34,96 +126,6 @@
     <p v-else>Keine Benutzer gefunden.</p>
   </div>
 </template>
-
-<script setup>
-import { ref, computed, onMounted } from "vue";
-
-const benutzer = ref([]);
-const searchQuery = ref("");
-
-const fetchBenutzerVomBackend = async () => {
-  try {
-    const response = await fetch(
-        "https://projekte.tgm.ac.at/quizit/api/user",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a", // API-Key
-          },
-        }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP-Fehler! Status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    if (data.status === "Success" && data.users) {
-      benutzer.value = data.users.map((user) => ({
-        id: user.userId,
-        username: user.userName,
-        fullname: user.userFullname || "Unbekannter Name",
-        year: user.userYear,
-        class: user.userClass,
-        type: user.userType,
-        email: user.userMail,
-        blocked: user.userBlocked || false, // Hinzufügen des Blockierstatus
-      }));
-    } else {
-      console.error("Keine Benutzer gefunden oder Fehler im Response-Body.");
-    }
-  } catch (error) {
-    console.error("Fehler beim Laden der Benutzer:", error);
-  }
-};
-
-const filteredBenutzer = computed(() => {
-  return benutzer.value.filter((user) => {
-    return (
-        user.fullname.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        user.username.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.value.toLowerCase())
-    );
-  });
-});
-
-const toggleBlockUser = async (user) => {
-  try {
-    const response = await fetch(
-        `https://projekte.tgm.ac.at/quizit/api/user/block`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            authorization: "2e5c9ed5-c5f5-458a-a1cb-40b6235b052a", // API-Key
-          },
-          body: JSON.stringify({
-            userId: user.id,
-            userBlocked: !user.blocked,
-          }),
-        }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP-Fehler! Status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    if (data.status === "Success" && data.user) {
-      user.blocked = !user.blocked;
-    } else {
-      console.error("Fehler bei der Sperrung/Entsperrung des Benutzers.");
-    }
-  } catch (error) {
-    console.error("Fehler beim Sperren/Entsperren des Benutzers:", error);
-  }
-};
-
-onMounted(() => {
-  fetchBenutzerVomBackend();
-});
-</script>
 
 <style scoped>
 html,
