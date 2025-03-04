@@ -15,7 +15,7 @@ watch(
 </script>
 <template>
   <nav>
-    <router-link to="/datenverwaltung" class="nav-item" active-class="router-link-active">
+    <router-link to="/faecherverwaltung" class="nav-item" active-class="router-link-active">
       <div class="logo-container">
         <img
           src="@/assets/logo_quizit_blackwhite.png"
@@ -30,7 +30,7 @@ watch(
       <div class="nav-items">
         <div class="item-group">
           <router-link
-            to="/datenverwaltung"
+            to="/faecherverwaltung"
             class="nav-item"
             active-class="active"
           >
