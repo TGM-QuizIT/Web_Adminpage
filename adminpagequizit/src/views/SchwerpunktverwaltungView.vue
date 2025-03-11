@@ -76,6 +76,45 @@ const fetchFaecherVomBackend = async () => {
   }
 };
 
+const deleteFach = async () => {
+  if (!fachToDelete.value) {
+    console.warn("Keine Fach-ID zum Löschen vorhanden.");
+    return;
+  }
+
+  try {
+    const response = await fetch(`${apiUrl}/focus?id=${fachToDelete.value}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `${authKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Fehler: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.status === "Success") {
+      schwerpunkte.value = schwerpunkte.value.filter(
+          (schwerpunkt) => schwerpunkt.id !== fachToDelete.value
+      );
+
+      console.log("Schwerpunkt erfolgreich gelöscht.");
+    } else {
+      console.error("Fehler beim Löschen des Schwerpunkts:", data);
+    }
+  } catch (error) {
+    console.error("Fehler beim Löschen des Schwerpunkts:", error);
+  }
+
+  deleteConfirmationOpen.value = false;
+  fachToDelete.value = null;
+};
+
+
 
 const fetchSchwerpunkteVomBackend = async () => {
   if (!fachId && selectedFachId.value) {
@@ -146,45 +185,93 @@ const closeEditPopup = () => {
 };
 
 const saveEditPopup = async () => {
-
-  try {
-    const response = await fetch(`${apiUrl}/focus`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "authorization": `${authKey}`,
-      },
-      body: JSON.stringify({
-        focusName: currentSchwerpunkt.value.name,
-        focusYear: currentSchwerpunkt.value.year,
-        focusImageAddress: currentSchwerpunkt.value.imageAddress,
-        subjectId: parseInt(fachId.valueOf(), 10),
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Fehler: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log("API Response:", data);
-
-    if (data.status === "Success" && data.focus) {
-      schwerpunkte.value.push({
-        id: data.focus.focusId,
-        name: data.focus.focusName,
-        year: data.focus.focusYear,
-        imageAddress: data.focus.focusImageAddress,
-        subjectId: data.focus.subjectId,
-        active: data.focus.focusActive ? 1 : 0,
+  if (currentSchwerpunkt.value.id === null) {
+    // Neuer Schwerpunkt, POST-Anfrage
+    try {
+      const response = await fetch(`${apiUrl}/focus`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "authorization": `${authKey}`,
+        },
+        body: JSON.stringify({
+          focusName: currentSchwerpunkt.value.name,
+          focusYear: currentSchwerpunkt.value.year,
+          focusImageAddress: currentSchwerpunkt.value.imageAddress,
+          subjectId: parseInt(fachId.valueOf(), 10),
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error(`Fehler: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("API Response:", data);
+
+      if (data.status === "Success" && data.focus) {
+        schwerpunkte.value.push({
+          id: data.focus.focusId,
+          name: data.focus.focusName,
+          year: data.focus.focusYear,
+          imageAddress: data.focus.focusImageAddress,
+          subjectId: data.focus.subjectId,
+          active: data.focus.focusActive ? 1 : 0,
+        });
+      }
+    } catch (error) {
+      console.error("Fehler beim Erstellen des Schwerpunkts:", error);
     }
-  } catch (error) {
-    console.error("Fehler beim Erstellen des Schwerpunkts:", error);
+  } else {
+    // Vorhandener Schwerpunkt, PUT-Anfrage
+    const updatedFocus = {
+      focusId: currentSchwerpunkt.value.id,
+      focusName: currentSchwerpunkt.value.name,
+      focusYear: currentSchwerpunkt.value.year,
+      focusImageAddress: currentSchwerpunkt.value.imageAddress,
+      subjectId: currentSchwerpunkt.value.subjectId,
+      focusActive: currentSchwerpunkt.value.active,
+    };
+
+    try {
+      const response = await fetch(`${apiUrl}/focus`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `${authKey}`,
+        },
+        body: JSON.stringify(updatedFocus),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+            `Fehler beim Aktualisieren des Schwerpunkts: ${errorData.status} - ${errorData.reason}`
+        );
+      }
+
+      const data = await response.json();
+      console.log("Schwerpunkt erfolgreich aktualisiert:", data);
+
+      // Update der schwerpunkte Liste nach der Aktualisierung
+      const index = schwerpunkte.value.findIndex(
+          (item) => item.id === currentSchwerpunkt.value.id
+      );
+      if (index !== -1) {
+        schwerpunkte.value[index] = {
+          ...schwerpunkte.value[index], // Behalte die bestehenden Werte
+          ...updatedFocus, // Überschreibe mit den aktualisierten Werten
+        };
+      }
+    } catch (error) {
+      console.error("Fehler beim Aktualisieren des Schwerpunkts:", error);
+    }
   }
 
   closeEditPopup();
 };
+
+
 
 const popupTitle = ref("Schwerpunkt erstellen");
 
@@ -330,7 +417,7 @@ onMounted(() => {
 
     <div v-if="deleteConfirmationOpen" class="confirmation-popup">
       <div class="confirmation-box">
-        <p>Fach löschen?</p>
+        <p>Schwerpunkt löschen?</p>
         <button @click="deleteFach">Yes</button>
         <button @click="deleteConfirmationOpen = false">No</button>
       </div>
@@ -364,6 +451,56 @@ onMounted(() => {
   background-color: #e0e0e0;
   color: #888;
   opacity: 0.5;
+}
+
+.confirmation-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.confirmation-box {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  width: 300px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.confirmation-box p {
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.confirmation-box button {
+  padding: 10px 20px;
+  margin-top: 10px;
+  cursor: pointer;
+  background-color: #009de0;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.confirmation-box button:hover {
+  background-color: #0092e0;
+}
+
+.confirmation-box button:nth-child(2) {
+  background-color: #f44336;
+}
+
+.confirmation-box button:nth-child(2):hover {
+  background-color: #e53935;
 }
 
 .subjectSelectButton {
