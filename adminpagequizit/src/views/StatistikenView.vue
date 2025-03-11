@@ -135,7 +135,9 @@ const updateChart = () => {
 watch(results, updateChart);
 
 onMounted(fetchUsers);
-</script><template>
+</script>
+
+<template>
   <div class="container">
     <div class="content">
       <div class="left-panel">
@@ -197,8 +199,6 @@ onMounted(fetchUsers);
     </div>
   </div>
 </template>
-
-
 
 <style scoped>
 .container {
@@ -308,5 +308,9 @@ canvas {
   background: #f8f9fa;
   font-weight: bold;
 }
-</style>
 
+.sort-controls {
+  display: flex;
+  gap: 2%;
+}
+</style>
