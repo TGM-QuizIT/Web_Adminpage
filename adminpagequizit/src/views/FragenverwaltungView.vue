@@ -229,7 +229,6 @@ onMounted(() => {
 });
 </script>
 
-
 <template>
   <div class="fragenverwaltungs-container">
     <h1>Fragenverwaltung</h1>
@@ -344,7 +343,6 @@ onMounted(() => {
 
   </div>
 </template>
-
 
 <style scoped>
 

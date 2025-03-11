@@ -418,8 +418,8 @@ onMounted(() => {
     <div v-if="deleteConfirmationOpen" class="confirmation-popup">
       <div class="confirmation-box">
         <p>Schwerpunkt löschen?</p>
-        <button @click="deleteFach">Yes</button>
-        <button @click="deleteConfirmationOpen = false">No</button>
+        <button @click="deleteFach">Ja</button>
+        <button @click="deleteConfirmationOpen = false">Neins</button>
       </div>
     </div>
 
