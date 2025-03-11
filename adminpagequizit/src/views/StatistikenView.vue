@@ -98,6 +98,9 @@ const handleUserSelection = (user) => {
   fetchResults();
   fetchSubjects();
   searchQuery.value = '';
+  if(latestResults.value.length > 0) {
+    chartInstance.destroy();
+  }
 };
 
 const updateChart = () => {
@@ -155,38 +158,42 @@ onMounted(fetchUsers);
 
         <div v-if="isLoading" class="loading">Lade Ergebnisse...</div>
 
-        <div v-if="results.length" class="results">
-          <h2>Ergebnisse für {{ selectedUserFullname || 'Kein Benutzer ausgewählt' }}</h2>
+        <div v-if="selectedUserFullname">
+          <h2>Ergebnisse für {{ selectedUserFullname }}</h2>
+          <div v-if="results.length">
+            <div class="sort-controls">
+              <select v-model="sortBy" class="dropdown">
+                <option value="resultDateTime">Datum</option>
+                <option value="resultScore">Score</option>
+                <option value="focusId">Schwerpunkt</option>
+              </select>
+              <button @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'" class="sort-button">
+                {{ sortOrder === 'asc' ? '▲ Aufsteigend' : '▼ Absteigend' }}
+              </button>
+            </div>
 
-          <div class="sort-controls">
-            <select v-model="sortBy" class="dropdown">
-              <option value="resultDateTime">Datum</option>
-              <option value="resultScore">Score</option>
-              <option value="focusId">Schwerpunkt</option>
-            </select>
-            <button @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'" class="sort-button">
-              {{ sortOrder === 'asc' ? '▲ Aufsteigend' : '▼ Absteigend' }}
-            </button>
+            <table class="results-table">
+              <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Score</th>
+                <th v-if="selectedUserFocus.length">Schwerpunkt</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr v-for="result in sortedResults" :key="result.resultId">
+                <td>{{ formatDate(result.resultDateTime) }}</td>
+                <td>{{ result.resultScore }}</td>
+                <td v-if="selectedUserFocus.length">
+                  {{ selectedUserFocus.find(focus => focus.focusId === result.focusId)?.focusName || 'Kein Schwerpunkt' }}
+                </td>
+              </tr>
+              </tbody>
+            </table>
           </div>
-
-          <table class="results-table">
-            <thead>
-            <tr>
-              <th>Datum</th>
-              <th>Score</th>
-              <th v-if="selectedUserFocus.length">Schwerpunkt</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr v-for="result in sortedResults" :key="result.resultId">
-              <td>{{ formatDate(result.resultDateTime) }}</td>
-              <td>{{ result.resultScore }}</td>
-              <td v-if="selectedUserFocus.length">
-                {{ selectedUserFocus.find(focus => focus.focusId === result.focusId)?.focusName || 'Kein Schwerpunkt' }}
-              </td>
-            </tr>
-            </tbody>
-          </table>
+          <div v-else>
+            <p>{{ selectedUserFullname }} hat noch keine Ergebnisse.</p>
+          </div>
         </div>
       </div>
 
@@ -200,6 +207,7 @@ onMounted(fetchUsers);
   </div>
 </template>
 
+
 <style scoped>
 .container {
   padding: 20px;
@@ -212,6 +220,7 @@ onMounted(fetchUsers);
 
 .left-panel {
   flex: 1;
+  margin-right: 2%;
 }
 
 .right-panel {
@@ -231,7 +240,7 @@ canvas {
 }
 
 .search-box {
-  width: 100%;
+  width: 98%;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
