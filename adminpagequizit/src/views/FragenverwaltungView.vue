@@ -48,11 +48,21 @@ const saveEditPopup = async () => {
     return;
   }
 
+  if (selectedType.value === "single") {
+    currentFrage.value.options.forEach((option, index) => {
+      option.optionCorrect = index === currentFrage.value.selectedCorrectAnswer;
+    });
+  } else if (selectedType.value === "multiple") {
+    currentFrage.value.options.forEach((option, index) => {
+      option.optionCorrect = currentFrage.value.selectedCorrectAnswer.includes(index);
+    });
+  }
+
   const questionData = {
     questionText: currentFrage.value.text,
     options: currentFrage.value.options.map(option => ({
       optionText: option.optionText,
-      optionCorrect: option.optionCorrect
+      optionCorrect: option.optionCorrect,
     })),
     focusId: parseInt(schwerpunktId.valueOf(), 10),
     mChoice: selectedType.value === "multiple",
