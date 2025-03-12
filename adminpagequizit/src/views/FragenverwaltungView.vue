@@ -48,16 +48,6 @@ const saveEditPopup = async () => {
     return;
   }
 
-  if (selectedType.value === "single") {
-    currentFrage.value.options.forEach((option, index) => {
-      option.optionCorrect = index === currentFrage.value.selectedCorrectAnswer;
-    });
-  } else if (selectedType.value === "multiple") {
-    currentFrage.value.options.forEach((option, index) => {
-      option.optionCorrect = currentFrage.value.selectedCorrectAnswer.includes(index);
-    });
-  }
-
   const questionData = {
     questionText: currentFrage.value.text,
     options: currentFrage.value.options.map(option => ({
@@ -158,8 +148,18 @@ const fetchFragenVomBackend = async () => {
 
 const openEditPopup = (frage) => {
   currentFrage.value = { ...frage };
+
+  if (frage.mChoice) {
+    selectedType.value = "multiple";
+  } else if (frage.textInput) {
+    selectedType.value = "text";
+  } else {
+    selectedType.value = "single";
+  }
+
   isEditPopupOpen.value = true;
 };
+
 
 const openCreatePopup = () => {
   currentFrage.value = {
