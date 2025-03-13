@@ -10,7 +10,7 @@
 @import "material-symbols";
 
 #app {
-  font-family: var(--font-family-roboto), sans-serif;
+  font-family: var(--font-family-poppins), sans-serif;
   font-size: var(--font-size-medium);
   font-weight: var(--font-weight-regular);
   display: flex;
