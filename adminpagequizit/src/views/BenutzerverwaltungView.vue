@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue";
 
 const benutzer = ref([]);
 const searchQuery = ref("");
+const selectedClass = ref(null);
 const apiUrl = process.env.VUE_APP_API_URL;
 const authKey = process.env.VUE_APP_AUTH_KEY;
 
@@ -44,12 +45,21 @@ const fetchBenutzerVomBackend = async () => {
 };
 
 const filteredBenutzer = computed(() => {
+  const searchTerms = searchQuery.value.toLowerCase().split(" ");
+
   return benutzer.value.filter((user) => {
-    return (
-        user.fullname.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        user.username.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.value.toLowerCase())
+    const matchesSearchQuery = searchTerms.every(term =>
+        user.fullname.toLowerCase().includes(term) ||
+        user.username.toLowerCase().includes(term) ||
+        user.email.toLowerCase().includes(term) ||
+        user.class.toLowerCase().includes(term) ||
+        user.year.toString().includes(term) ||
+        user.type.toLowerCase().includes(term)
     );
+
+    const matchesSelectedClass = selectedClass.value ? user.class === selectedClass.value : true;
+
+    return matchesSearchQuery && matchesSelectedClass;
   });
 });
 
@@ -103,6 +113,12 @@ onMounted(() => {
             class="search-field"
         />
       </div>
+      <select v-model="selectedClass" class="class-dropdown">
+        <option :value="null">Alle Klassen</option>
+        <option v-for="cls in [...new Set(benutzer.map(user => user.class))]" :key="cls" :value="cls">
+          {{ cls }}
+        </option>
+      </select>
     </div>
 
     <div class="benutzer-liste" v-if="filteredBenutzer.length > 0">
@@ -150,7 +166,7 @@ h1 {
 
 button {
   padding: 10px;
-  width: 10%;
+  width: auto;
   background-color: #009de0;
   color: white;
   border: none;
@@ -227,6 +243,8 @@ button.blocked {
   position: relative;
   display: flex;
   align-items: center;
+  flex-grow: 1;
+  margin-right: 10px;
 }
 
 .search-icon {
@@ -243,5 +261,18 @@ button.blocked {
   font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 5px;
+}
+
+.class-dropdown {
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: white;
+  cursor: pointer;
+}
+
+.class-dropdown:hover {
+  border-color: #888;
 }
 </style>
