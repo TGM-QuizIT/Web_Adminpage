@@ -114,7 +114,9 @@ const deleteFach = async () => {
   fachToDelete.value = null;
 };
 
-
+const goBack = () => {
+  router.push("/faecherverwaltung");
+};
 
 const fetchSchwerpunkteVomBackend = async () => {
   if (!fachId && selectedFachId.value) {
@@ -328,7 +330,7 @@ const updateSchwerpunkt = async (schwerpunkt) => {
 const navigateToFragen = (schwerpunkt) => {
   router.push({
     path: "/fragenverwaltung",
-    query: { schwerpunktId: schwerpunkt.id },
+    query: { fachId: fachId, schwerpunktId: schwerpunkt.id },
   });
 };
 
@@ -363,6 +365,9 @@ onMounted(() => {
     <div class="header">
       <button @click="createSchwerpunkt" class="schwerpunkt-create-button">
         <span class="material-symbols-outlined">post_add</span>Schwerpunkt erstellen
+      </button>
+      <button @click="goBack" class="back-button">
+        <span class="material-symbols-outlined">arrow_back</span> Zur Fächerverwaltung
       </button>
       <div class="search-container">
         <span class="search-icon material-symbols-outlined">search</span>
@@ -447,6 +452,21 @@ onMounted(() => {
 </template>
 
 <style scoped>
+
+.back-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: auto;
+  font-size: 16px;
+  background-color: #6c757d;
+  margin-right: 50%;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}
+
 .inactive {
   background-color: #e0e0e0;
   color: #888;
@@ -620,7 +640,7 @@ button:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 12%;
+  width: 17%;
   font-size: 20px;
 }
 

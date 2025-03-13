@@ -1,11 +1,13 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 const apiUrl = process.env.VUE_APP_API_URL;
 const authKey = process.env.VUE_APP_AUTH_KEY;
 
 const route = useRoute();
+const router = useRouter();
 const schwerpunktId = route.query.schwerpunktId;
+const fachId = route.query.fachId;
 
 const fragen = ref([]);
 const searchQuery = ref("");
@@ -17,6 +19,13 @@ const currentFrage = ref({});
 
 const fachToDelete = ref(null);
 const deleteConfirmationOpen = ref(false);
+
+const goBack = () => {
+  router.push({
+    path: "/schwerpunktverwaltung",
+    query: { fachId: fachId, schwerpunktId: schwerpunktId },
+  });
+};
 
 const onTypeChange = () => {
   if (selectedType.value === "single") {
@@ -246,6 +255,9 @@ onMounted(() => {
       <button @click="openCreatePopup" class="frage-create-button">
         <span class="material-symbols-outlined">post_add</span>Frage erstellen
       </button>
+      <button @click="goBack" class="back-button">
+        <span class="material-symbols-outlined">arrow_back</span> Zur Schwerpunktverwaltung
+      </button>
       <div class="search-container">
         <span class="search-icon material-symbols-outlined">search</span>
         <input
@@ -269,7 +281,7 @@ onMounted(() => {
             <span class="material-symbols-outlined">edit</span>
           </button>
           <button @click="confirmDelete(frage.id)">
-          <span class="material-symbols-outlined">delete</span>
+            <span class="material-symbols-outlined">delete</span>
           </button>
         </div>
       </div>
@@ -355,6 +367,20 @@ onMounted(() => {
 </template>
 
 <style scoped>
+
+.back-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: auto;
+  font-size: 16px;
+  background-color: #6c757d;
+  margin-right: 50%;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+}
 
 .fragenverwaltungs-container {
   display: flex;
