@@ -367,7 +367,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-
 .back-button {
   display: flex;
   align-items: center;
@@ -400,14 +399,19 @@ h1 {
 .deleteAnswerButton {
   background-color: #ff4c4c;
   color: white;
-  border-radius: 5px;
-  padding: 5px 10px;
-  margin-top: 5px;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 
 .deleteAnswerButton:hover {
   background-color: #ff2e2e;
-  transition: background-color 0.3s;
 }
 
 button {
@@ -516,20 +520,13 @@ button:hover {
   color: #009de0;
 }
 
-.search-icon {
-  position: absolute;
-  left: 10px;
-  color: #888;
-  font-size: 20px;
-}
-
 .edit-popup-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -538,15 +535,25 @@ button:hover {
 
 .edit-popup {
   background: #ffffff;
-  padding: 20px;
-  border-radius: 10px;
-  width: 80%;
-  height: 80%;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  padding: 30px;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 1000px;
+  height: auto;
+  max-height: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  overflow: hidden;
+}
+
+.edit-popup h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
+  font-weight: 600;
 }
 
 .popup-content {
@@ -554,50 +561,38 @@ button:hover {
   justify-content: space-between;
   width: 100%;
   height: 100%;
+  gap: 20px;
 }
 
 .left-side {
-  width: 38%;
-  height: 80%;
+  width: 45%;
   display: flex;
   flex-direction: column;
 }
 
-.left-side-upper {
-  margin-bottom: 2%;
-  display: flex;
-  align-items: center;
-}
-
-.labelText {
-  font-weight: bold;
-}
-
 .right-side {
-  width: 58%;
+  width: 50%;
   display: flex;
   flex-direction: column;
 }
 
 .left-side textarea {
-  width: 90%;
-  padding-bottom: 20%;
-  padding-left: 2%;
-  padding-top: 2%;
-  margin-top: 2%;
+  width: 100%;
+  height: 150px;
+  padding: 10px;
   border: 2px solid #ccc;
   border-radius: 8px;
-  font-size: 12px;
-  background-color: #fff;
+  font-size: 14px;
+  background-color: #f9f9f9;
   transition: all 0.3s ease;
   outline: none;
   resize: none;
+  margin-bottom: 20px;
 }
 
 .left-side textarea:focus {
   border-color: #009de0;
-  outline: none;
-  box-shadow: 0 0 5px rgba(0, 157, 224, 0.5);
+  box-shadow: 0 0 8px rgba(0, 157, 224, 0.5);
 }
 
 .left-side input:focus {
@@ -607,97 +602,108 @@ button:hover {
 }
 
 .answers-list {
-  max-height: 80%;
+  max-height: 400px;
   overflow-y: auto;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 2px solid #ccc;
 }
 
 .answers-list .option {
-  margin-bottom: 4%;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  width: 110%;
+  gap: 10px;
+}
+
+.answers-list-textinput {
+  width: 60%;
+  padding: 8px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: #fff;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.answers-list-textinput:focus {
+  border-color: #009de0;
+  box-shadow: 0 0 5px rgba(0, 157, 224, 0.5);
+}
+
+.deleteAnswerButton {
+  background-color: #ff4c4c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.deleteAnswerButton:hover {
+  background-color: #ff2e2e;
+}
+
+.addAnswerButton {
+  padding: 10px;
+  width: 100%;
+  background-color: #009de0;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.3s;
+  font-size: 14px;
+}
+
+.addAnswerButton:hover {
+  background-color: #007bb5;
 }
 
 .save-button {
   padding: 10px 30px;
   background-color: #4caf50;
   color: white;
+  border: none;
   border-radius: 5px;
   cursor: pointer;
   align-self: flex-end;
+  margin-top: 20px;
+  transition: background-color 0.3s;
+  font-size: 16px;
 }
 
 .save-button:hover {
   background-color: #45a049;
-  transition: background-color 0.3s;
 }
 
 .close-button {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 15px;
+  right: 15px;
   background-color: transparent;
   border: none;
   color: #009de0;
-  font-size: 20px;
+  font-size: 24px;
   cursor: pointer;
+  transition: color 0.3s;
 }
 
-.addAnswerButton {
-  padding: 10px;
-  width: auto;
-  background-color: #009de0;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-right: 10px;
-}
-
-.addAnswerButton:hover {
-  background-color: #007bb5;
-  transition: background-color 0.3s;
-}
-
-.option {
-  margin-bottom: 20%;
-  display: flex;
-  align-items: center;
-  gap: 6%;
-}
-
-.answers-list-labels {
-  display: flex;
-  gap: 60.5%;
-  margin-bottom: 2%;
-  font-weight: bold;
-}
-
-.answers-list-textinput {
-  width: 50%;
-  padding-bottom: 4%;
-  padding-left: 1%;
-  padding-top: 1%;
-  border: 2px solid #ccc;
-  border-radius: 8px;
-  font-size: 12px;
-  background-color: #fff;
-  transition: all 0.3s ease;
-  outline: none;
-  resize: none;
-}
-
-.answers-list-textinput:focus {
-  border-color: #009de0;
-  outline: none;
-  box-shadow: 0 0 5px rgba(0, 157, 224, 0.5);
-}
-
-.actions {
-  display: flex;
-  align-items: center;
+.close-button:hover {
+  color: #ffffff;
 }
 
 .dropdown {
-  margin-top: 2%;
-  width: 35%;
+  width: 100%;
   padding: 8px;
   border: 2px solid #ccc;
   border-radius: 8px;
@@ -707,6 +713,7 @@ button:hover {
   outline: none;
   appearance: none;
   cursor: pointer;
+  margin-bottom: 20px;
 }
 
 .dropdown:focus {
@@ -719,6 +726,30 @@ button:hover {
   font-size: 14px;
   padding: 8px;
   background-color: #fff;
+}
+
+.answers-list-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #333;
+}
+
+.answers-list-labels label {
+  flex: 1;
+  text-align: left;
+}
+
+.answers-list-labels label:last-child {
+  text-align: left;
+  margin-left: 62%;
+}
+
+.labelText {
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
 }
 
 .confirmation-popup {
