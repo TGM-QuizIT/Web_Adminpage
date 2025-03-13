@@ -9,10 +9,11 @@ function goToLogin() {
 
 <template>
   <div class="page-container">
-    <p class="welcome-text">Angemeldet als: Nikolaus Redl</p>
-    <button @click="goToLogin" class="logout">
-      <p>Abmelden</p>
-    </button>
+    <div class="button-container">
+      <button @click="goToLogin" class="logout">
+        <p>Abmelden</p>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -20,29 +21,34 @@ function goToLogin() {
 html,
 body {
   height: 100%;
+  margin: 0;
 }
 
 .page-container {
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  margin: 1% 0 0 3%;
-  flex: 1;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }
 
-.welcome-text {
-  text-align: left;
+.button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .logout {
-  padding: 10px;
+  padding: 15px 30px;
   background-color: #c1272d;
   color: #fff;
-  font-size: 14px;
+  font-size: 16px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.3s;
+}
+
+.logout:hover {
+  background-color: #a02025;
 }
 </style>
