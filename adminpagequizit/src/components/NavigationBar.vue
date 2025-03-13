@@ -7,20 +7,21 @@ const route = useRoute();
 const showNavItems = ref(route.meta.showNavItems !== false);
 
 watch(
-  () => route.path,
-  () => {
-    showNavItems.value = route.meta.showNavItems !== false;
-  }
+    () => route.path,
+    () => {
+      showNavItems.value = route.meta.showNavItems !== false;
+    }
 );
 </script>
+
 <template>
   <nav>
     <router-link to="/faecherverwaltung" class="nav-item" active-class="router-link-active">
       <div class="logo-container">
         <img
-          src="@/assets/logo_quizit_blackwhite.png"
-          alt="Logo"
-          class="logo"
+            src="@/assets/logo_quizit_blackwhite.png"
+            alt="Logo"
+            class="logo"
         />
         <span class="title">Admin-Dashboard</span>
       </div>
@@ -30,9 +31,9 @@ watch(
       <div class="nav-items">
         <div class="item-group">
           <router-link
-            to="/faecherverwaltung"
-            class="nav-item"
-            active-class="active"
+              to="/faecherverwaltung"
+              class="nav-item"
+              active-class="active"
           >
             <span class="material-symbols-outlined">database</span>
             <p class="nav-item-text">Datenverwaltung</p>
@@ -40,9 +41,9 @@ watch(
         </div>
         <div class="item-group">
           <router-link
-            to="/benutzerverwaltung"
-            class="nav-item"
-            active-class="active"
+              to="/benutzerverwaltung"
+              class="nav-item"
+              active-class="active"
           >
             <span class="material-symbols-outlined">manage_accounts</span>
             <p class="nav-item-text">Benutzerverwaltung</p>
@@ -57,7 +58,7 @@ watch(
       </div>
       <div class="profil-frame">
         <router-link to="/profil" class="profil-link">
-          <span class="material-symbols-outlined">account_circle</span>
+          <span class="material-symbols-outlined">logout</span> <!-- Geändertes Symbol -->
         </router-link>
       </div>
     </div>
@@ -160,7 +161,7 @@ nav {
 }
 
 .profil-link span {
-  font-size: 64px;
+  font-size: 45px;
 }
 
 .profil-link:hover span {

@@ -95,6 +95,38 @@ const toggleBlockUser = async (user) => {
   }
 };
 
+const updateUserYear = async (user, newYear) => {
+  try {
+    const response = await fetch(
+        `${apiUrl}/user`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: `${authKey}`,
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            userYear: newYear,
+          }),
+        }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.status === "Success" && data.user) {
+      user.year = newYear; // Aktualisiere den Jahrgang lokal
+    } else {
+      console.error("Fehler beim Aktualisieren des Jahrgangs.");
+    }
+  } catch (error) {
+    console.error("Fehler beim Aktualisieren des Jahrgangs:", error);
+  }
+};
+
 onMounted(() => {
   fetchBenutzerVomBackend();
 });
@@ -128,7 +160,17 @@ onMounted(() => {
           <span class="user-email">Email: {{ user.email }}</span>
           <span class="user-username">Username: {{ user.username }}</span>
           <span class="user-class">Klasse: {{ user.class }}</span>
-          <span class="user-year">Jahrgang: {{ user.year }}</span>
+          <span class="user-year">
+            Jahrgang:
+            <input
+                type="number"
+                v-model.number="user.year"
+                min="1"
+                max="5"
+                @change="updateUserYear(user, user.year)"
+                class="year-input"
+            />
+          </span>
           <span class="user-type">Accounttyp: {{ user.type }}</span>
         </div>
         <div class="actions">
@@ -274,5 +316,13 @@ button.blocked {
 
 .class-dropdown:hover {
   border-color: #888;
+}
+
+.year-input {
+  width: 50px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-align: center;
 }
 </style>

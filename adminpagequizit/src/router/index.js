@@ -4,7 +4,6 @@ import BenutzerverwaltungView from "@/views/BenutzerverwaltungView.vue";
 import StatistikenView from "@/views/StatistikenView.vue";
 import ProfilView from "@/views/ProfilView.vue";
 import LoginView from "@/views/LoginView.vue";
-import BenutzereinstellungenView from "@/views/BenutzereinstellungenView.vue";
 import FaecherverwaltungView from "@/views/FaecherverwaltungView.vue";
 import SchwerpunktverwaltungView from "@/views/SchwerpunktverwaltungView.vue";
 import FragenverwaltungView from "@/views/FragenverwaltungView.vue";
@@ -32,11 +31,6 @@ const routes = [
   },
   { path: "/profil", component: ProfilView, meta: { showNavItems: true, requiresAuth: true } },
   { path: "/login", component: LoginView, meta: { showNavItems: false } },
-  {
-    path: "/benutzereinstellungen",
-    component: BenutzereinstellungenView,
-    meta: { showNavItems: true, requiresAuth: true },
-  },
   {
     path: "/schwerpunktverwaltung/",
     component: SchwerpunktverwaltungView,
