@@ -191,6 +191,39 @@ body {
   height: 100%;
 }
 
+.year-input {
+  width: 60px;
+  padding: 8px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+.year-input:hover {
+  border-color: #009de0;
+}
+
+.year-input:focus {
+  border-color: #009de0;
+  box-shadow: 0 0 8px rgba(0, 157, 224, 0.5);
+  background-color: #fff;
+}
+
+.user-year {
+  display: flex;
+  align-items: center;
+  margin-top: 2%;
+  margin-bottom: 2%;
+  gap: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
 .benutzerverwaltungs-container {
   display: flex;
   max-height: 85%;
@@ -301,22 +334,73 @@ button.blocked {
   padding-right: 10px;
   width: 100%;
   font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+.search-field:hover {
+  border-color: #009de0;
+}
+
+.search-field:focus {
+  border-color: #009de0;
+  box-shadow: 0 0 8px rgba(0, 157, 224, 0.5);
+  background-color: #fff;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  color: #888;
+  font-size: 20px;
+  transition: color 0.3s ease;
+}
+
+.search-container:hover .search-icon {
+  color: #009de0;
+}
+
+.search-field:focus + .search-icon {
+  color: #009de0;
 }
 
 .class-dropdown {
   padding: 10px;
   font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: white;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  color: #333;
   cursor: pointer;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .class-dropdown:hover {
-  border-color: #888;
+  border-color: #009de0;
 }
+
+.class-dropdown:focus {
+  border-color: #009de0;
+  box-shadow: 0 0 8px rgba(0, 157, 224, 0.5);
+  background-color: #fff;
+}
+
+.class-dropdown option {
+  padding: 10px;
+  background-color: #fff;
+  color: #333;
+}
+
+.class-dropdown option:hover {
+  background-color: #009de0;
+  color: #fff;
+}
+
 
 .year-input {
   width: 50px;

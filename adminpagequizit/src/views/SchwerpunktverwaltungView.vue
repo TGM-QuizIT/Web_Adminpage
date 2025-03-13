@@ -668,8 +668,38 @@ button:hover {
   padding-right: 10px;
   width: 100%;
   font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+.search-field:hover {
+  border-color: #009de0;
+}
+
+.search-field:focus {
+  border-color: #009de0;
+  box-shadow: 0 0 8px rgba(0, 157, 224, 0.5);
+  background-color: #fff;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  color: #888;
+  font-size: 20px;
+  transition: color 0.3s ease;
+}
+
+.search-container:hover .search-icon {
+  color: #009de0;
+}
+
+.search-field:focus + .search-icon {
+  color: #009de0;
 }
 
 .edit-popup-overlay {
