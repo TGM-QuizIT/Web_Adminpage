@@ -15,6 +15,7 @@ const selectedUserFullname = ref('');
 const selectedUserFocus = ref([]);
 const chartRef = ref(null);
 let chartInstance = null;
+const showAllResults = ref(false);
 
 const filteredUsers = computed(() => {
   return users.value.filter(user =>
@@ -63,11 +64,12 @@ const fetchSubjects = async () => {
   }
 };
 
-const sortedResults = computed(() => {
-  return [...results.value].sort((a, b) => {
+const displayedResults = computed(() => {
+  const sorted = [...results.value].sort((a, b) => {
     let modifier = sortOrder.value === 'asc' ? 1 : -1;
     return a[sortBy.value] > b[sortBy.value] ? modifier : -modifier;
   });
+  return showAllResults.value ? sorted : sorted.slice(0, 10);
 });
 
 const latestResults = computed(() => {
@@ -118,8 +120,8 @@ const updateChart = () => {
       datasets: [{
         label: 'Score-Verlauf',
         data: latestResults.value.map(r => r.resultScore),
-        borderColor: '#007bff',
-        backgroundColor: 'rgba(0, 123, 255, 0.2)',
+        borderColor: '#0077b6',
+        backgroundColor: 'rgba(0, 157, 224, 0.2)',
         fill: true,
         tension: 0.1
       }]
@@ -129,7 +131,7 @@ const updateChart = () => {
       maintainAspectRatio: false,
       scales: {
         x: { title: { display: true, text: 'Datum' } },
-        y: { title: { display: true, text: 'Score' }, beginAtZero: true }
+        y: { title: { display: true, text: 'Score in %' }, beginAtZero: true }
       }
     }
   });
@@ -164,8 +166,7 @@ onMounted(fetchUsers);
             <div class="sort-controls">
               <select v-model="sortBy" class="dropdown">
                 <option value="resultDateTime">Datum</option>
-                <option value="resultScore">Score</option>
-                <option value="focusId">Schwerpunkt</option>
+                <option value="resultScore">Score in %</option>
               </select>
               <button @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'" class="sort-button">
                 {{ sortOrder === 'asc' ? '▲ Aufsteigend' : '▼ Absteigend' }}
@@ -176,20 +177,20 @@ onMounted(fetchUsers);
               <thead>
               <tr>
                 <th>Datum</th>
-                <th>Score</th>
-                <th v-if="selectedUserFocus.length">Schwerpunkt</th>
+                <th>Score in %</th>
               </tr>
               </thead>
               <tbody>
-              <tr v-for="result in sortedResults" :key="result.resultId">
+              <tr v-for="result in displayedResults" :key="result.resultId">
                 <td>{{ formatDate(result.resultDateTime) }}</td>
                 <td>{{ result.resultScore }}</td>
-                <td v-if="selectedUserFocus.length">
-                  {{ selectedUserFocus.find(focus => focus.focusId === result.focusId)?.focusName || 'Kein Schwerpunkt' }}
-                </td>
               </tr>
               </tbody>
             </table>
+
+            <button @click="showAllResults = !showAllResults" class="toggle-results-button">
+              {{ showAllResults ? 'Weniger anzeigen' : 'Mehr anzeigen' }}
+            </button>
           </div>
           <div v-else>
             <p>{{ selectedUserFullname }} hat noch keine Ergebnisse.</p>
@@ -206,7 +207,6 @@ onMounted(fetchUsers);
     </div>
   </div>
 </template>
-
 
 <style scoped>
 .container {
@@ -288,7 +288,7 @@ canvas {
 }
 
 .sort-button {
-  background: #007bff;
+  background: #009de0;
   color: white;
   border: none;
   padding: 8px 12px;
@@ -297,7 +297,7 @@ canvas {
 }
 
 .sort-button:hover {
-  background: #0056b3;
+  background: #0077b6;
 }
 
 .results-table {
@@ -321,5 +321,19 @@ canvas {
 .sort-controls {
   display: flex;
   gap: 2%;
+}
+
+.toggle-results-button {
+  background: #009de0;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.toggle-results-button:hover {
+  background: #0077b6;
 }
 </style>
