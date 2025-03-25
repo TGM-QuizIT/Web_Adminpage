@@ -95,37 +95,6 @@ const toggleBlockUser = async (user) => {
   }
 };
 
-const updateUserYear = async (user, newYear) => {
-  try {
-    const response = await fetch(
-        `${apiUrl}/user`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            authorization: `${authKey}`,
-          },
-          body: JSON.stringify({
-            userId: user.id,
-            userYear: newYear,
-          }),
-        }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP-Fehler! Status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    if (data.status === "Success" && data.user) {
-      user.year = newYear; // Aktualisiere den Jahrgang lokal
-    } else {
-      console.error("Fehler beim Aktualisieren des Jahrgangs.");
-    }
-  } catch (error) {
-    console.error("Fehler beim Aktualisieren des Jahrgangs:", error);
-  }
-};
 
 onMounted(() => {
   fetchBenutzerVomBackend();
@@ -160,17 +129,6 @@ onMounted(() => {
           <span class="user-email">Email: {{ user.email }}</span>
           <span class="user-username">Username: {{ user.username }}</span>
           <span class="user-class">Klasse: {{ user.class }}</span>
-          <span class="user-year">
-            Jahrgang:
-            <input
-                type="number"
-                v-model.number="user.year"
-                min="1"
-                max="5"
-                @change="updateUserYear(user, user.year)"
-                class="year-input"
-            />
-          </span>
           <span class="user-type">Accounttyp: {{ user.type }}</span>
         </div>
         <div class="actions">
@@ -189,39 +147,6 @@ onMounted(() => {
 html,
 body {
   height: 100%;
-}
-
-.year-input {
-  width: 60px;
-  padding: 8px;
-  border: 2px solid #ccc;
-  border-radius: 8px;
-  font-size: 14px;
-  text-align: center;
-  outline: none;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  background-color: #f9f9f9;
-  color: #333;
-}
-
-.year-input:hover {
-  border-color: #009de0;
-}
-
-.year-input:focus {
-  border-color: #009de0;
-  box-shadow: 0 0 8px rgba(0, 157, 224, 0.5);
-  background-color: #fff;
-}
-
-.user-year {
-  display: flex;
-  align-items: center;
-  margin-top: 2%;
-  margin-bottom: 2%;
-  gap: 8px;
-  font-size: 14px;
-  color: #666;
 }
 
 .benutzerverwaltungs-container {
